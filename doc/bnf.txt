@@ -1,0 +1,12 @@
+language:
+  <declaration-block-begin> ::= let
+  <regex-declaration> ::= <regex-name> := <regex-definition>
+  <declaration-block-end> ::= in
+
+  <return> ::= <regex-def>
+
+  <regex-def> ::= "'" <regex-literal> "'"
+  <regex-interior> ::= "" | <regex-literal> <regex-interior> | <regex-substitution>
+  <regex-literal> ::= string
+  <regex-substitution> :: "${" <substitution-expr> "}"
+  <substitution-expr> ::= "'" <regex-literal> "'" | <function-call> | <capture-expr> | <substitution-expr> ","

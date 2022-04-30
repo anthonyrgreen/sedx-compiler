@@ -1,0 +1,62 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 1f2fdee5ba6a51150d64da0b3770c91c582753a5152ce84a69698d218d9bc994
+
+name:           sed-transpile
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/sed-transpile#readme>
+homepage:       https://github.com/githubuser/sed-transpile#readme
+bug-reports:    https://github.com/githubuser/sed-transpile/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2022 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/sed-transpile
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_sed_transpile
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+  default-language: Haskell2010
+
+executable sed-transpile-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_sed_transpile
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , sed-transpile
+  default-language: Haskell2010
+
+test-suite sed-transpile-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_sed_transpile
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , sed-transpile
+  default-language: Haskell2010
