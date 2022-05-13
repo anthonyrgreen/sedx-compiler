@@ -1,6 +1,7 @@
 module Main where
 
 import Lib
+import ExamplePrograms
 
 main :: IO ()
-main = someFunc
+main = putStr $ printMatchAndSub myProgram

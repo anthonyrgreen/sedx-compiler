@@ -1,12 +1,44 @@
 language:
-  <declaration-block-begin> ::= let
-  <regex-declaration> ::= <regex-name> := <regex-definition>
-  <declaration-block-end> ::= in
 
-  <return> ::= <regex-def>
+<let-declaration-block-begin> := let
+<let-declaration>             := <indent><let-name> = <let-definition>
 
-  <regex-def> ::= "'" <regex-literal> "'"
-  <regex-interior> ::= "" | <regex-literal> <regex-interior> | <regex-substitution>
-  <regex-literal> ::= string
-  <regex-substitution> :: "${" <substitution-expr> "}"
-  <substitution-expr> ::= "'" <regex-literal> "'" | <function-call> | <capture-expr> | <substitution-expr> ","
+<indent>                      := 2 spaces
+
+<let-name>                    := [A-Za-z_]<let-name-rest>
+<let-name-rest>               := [A-Za-z0-9_]<let-name-rest> | <nil>
+
+<let-definition>              := <let-string> | <function-call> | <function-capture>
+
+<let-string>                  := '<let-string-terms>'
+<let-string-terms>            := <let-string-term><let-string-terms> | <nil>
+<let-string-term>             := <let-expansion> | <let-string-literal>
+<let-string-literal>          := [::anychar::, $'s and ''s escaped]<let-string-literal> | <nil>
+
+<let-expansion>               := ${<let-expansion-terms>}
+<let-expansion-terms>         := <let-expansion-term>, <let_expansion-terms> | <let-expansion-term> | <nil>
+<let-expansion-term>          := <function-call> | <function-capture> | <let-string>
+
+<function-call>               := <function-name>(<function-args>)
+<function-name>               := <let-name>
+<function-args>               := <function-arg>, <function-args> | <function-arg> | <nil>
+<function-arg>                := <strict-string> | <function-call>
+
+<strict-string>               := '<strict-string-chars>'
+<strict-string-chars>         := <strict-string-char><strict-string-chars> | <nil>
+<strict-string-char>          := [::anychar::, 's escaped]
+
+<function-capture>            := capture(<function-capture-terms> as <function-capture-name>)
+<function-capture-terms>      := <function-capture-term>, <function-capture-terms> | <function-capture-term>
+<function-capture-term>       := <function-call> | <strict-string>
+<function-capture-name>       := <let-name>
+
+
+
+<return> ::= <regex-def>
+
+<regex-def> ::= "'" <regex-literal> "'"
+<regex-interior> ::= "" | <regex-literal> <regex-interior> | <regex-substitution>
+<regex-literal> ::= string
+<regex-substitution> :: "${" <substitution-expr> "}"
+<substitution-expr> ::= "'" <regex-literal> "'" | <function-call> | <capture-expr> | <substitution-expr> ","
