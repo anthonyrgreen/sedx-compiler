@@ -20,7 +20,7 @@ import Data.Functor
 import Control.Monad
 import Text.Megaparsec.Debug
 import Text.Megaparsec.Pos
-
+import Control.Monad.Trans.Free
 
 type Parser = Parsec Void String
 type LetDefP = Parser (LetDef ())
@@ -28,23 +28,38 @@ single_import_str = "  single_import := '${star(anyof('A-Za-z0-9')), maybe(', ')
 many_imports_str = "  many_imports := '${star(single_import())}'"
 filename_str = "  filename := '${star(noneof('/ '))}'"
 whole_path_str = "  whole_path := '${capture(filename()) as root, '/', star(filename(), '/'), capture(filename()) as filename}'"
+match_str = "import {${capture(many_imports()) as imports}} from '${capture(whole_path()) as whole_path}';"
 
 file_str = "let\n\
 \  single_import := '${star(anyof('A-Za-z0-9')), maybe(', ')}'\n\
 \  many_imports := '${star(single_import())}'\n\
 \  filename := '${star(noneof('/ '))}'\n\
 \  whole_path := '${capture(filename()) as root, '/', star(filename(), '/'), capture(filename()) as filename}'\n\
-\match\n"
+\match\n\
+\import {${capture(many_imports()) as imports}} from '${capture(whole_path()) as whole_path}';\n\
+\substitute\n\
+\import {${imports}} from '${whole_path.root}/some/directory/string/${whole_path.filename}';\n"
 test_pLetDef :: String -> IO ()
 test_pLetDef s = parseTest (pLetDecl $ mkPos 2) s 
 
+
+upToNextLine = hspace *> eol *> return ()
+
+
 pProgram :: Parser (Program ())
 pProgram = do
-  L.symbol space "let"
+  L.symbol upToNextLine "let"
   letIndent <- L.indentGuard space GT pos1
   letDecls <- many (pLetDecl letIndent) <&> sequence_
-  L.symbol space "match"
-  return letDecls
+  L.symbol upToNextLine "match"
+  matchDef <- L.lexeme upToNextLine $ pMatchDef <&> ProgramAst.match
+  L.symbol upToNextLine "substitute"
+  subDef <- L.lexeme upToNextLine $ pSubDef <&> ProgramAst.substitute
+  return $ do
+    letDecls
+    matchDef
+    subDef
+
 
 pLetDecl :: Pos -> Parser (Program ())
 pLetDecl letIndent = do
@@ -55,17 +70,20 @@ pLetDecl letIndent = do
   def <- L.lexeme space pLetDef
   return $ letDecl name def
 
+
 pLetName :: Parser String
-pLetName = do
+pLetName = label "pLetName" $ do
   first <- satisfy (\s -> isAlpha s || s == '_')
   rest <- many $ satisfy (\s -> isAlphaNum s || s == '_')
   return $ first : rest
 
+
 pLetDef :: LetDefP
-pLetDef = try pLetString <|> pFunctionCapture <|> (letDefInvocation <$> pFunctionCall)
+pLetDef = label "pLetDef" $ try pLetString <|> pFunctionCapture <|> (letDefInvocation <$> pFunctionCall)
+
 
 pLetString :: LetDefP
-pLetString = between openQuote closeQuote $ do
+pLetString = label "pLetString" $ between openQuote closeQuote $ do
   letStringTerms <- many pLetStringInteriorTerm
   return $ if null letStringTerms then letDefLiteral "" else sequence_ letStringTerms
   where
@@ -75,35 +93,29 @@ pLetString = between openQuote closeQuote $ do
 
 
 pLetExpansion :: LetDefP
-pLetExpansion = do
-  letExpansionTerms <- between openBrace closeBrace $ sepEndBy1 pLetExpansionTerm pLetSeparator
-  return $ sequence_ letExpansionTerms
+pLetExpansion = label "pLetExpansion" $ sequence_ <$> pLetExpansionTerms
   where
     openBrace = L.lexeme hspace $ string "${"
     closeBrace = L.lexeme hspace $ string "}"
     pLetSeparator = L.symbol hspace ","
     pLetExpansionTerm = L.lexeme hspace $ pLetString <|> try pFunctionCapture <|> (letDefInvocation <$> pFunctionCall)
+    pLetExpansionTerms = between openBrace closeBrace $ sepEndBy1 pLetExpansionTerm pLetSeparator
 
 
 pLetStringLiteral :: LetDefP
-pLetStringLiteral = do
+pLetStringLiteral = label "pLetStringLiteral" $ letDefLiteral <$> literalChars
   -- TODO: we're using 'some' here: what about empty strings??? (If we don't use 'some' we get infinite recursion)
-  literal <- some (try escapedCash <|> try escapedQuote <|> try escapedBackslash <|> regularChar)
-  return $ letDefLiteral literal
+  -- TODO: escape close brace in the right context
   where
     escapedCash = string "\\$" $> '$'
     escapedQuote = string "\\'" $> '\''
     escapedBackslash = string "\\\\" $> '\\'
     regularChar = noneOf "$'"
+    literalChars = some $ try escapedCash <|> try escapedQuote <|> try escapedBackslash <|> regularChar
 
-foo :: Parser [String]
-foo = between (string "{") (string "}") $ do
-  let inner = between (char '\'') (char '\'') (many (try $ noneOf "'" <|> noneOf "'"))
-  many (try $ noneOf "}")
-  sepEndBy inner (char ',')
 
 pFunctionCall :: Parser FuncInvocation
-pFunctionCall = do
+pFunctionCall = label "pFunctionCall" $ do
   funcName <- pLetName
   funcArgs <- pFuncArgs
   return $ case funcName of
@@ -119,8 +131,9 @@ pFunctionCall = do
     pFuncArgs = L.lexeme hspace $ between argOpen argClose (sepEndBy functionArg argSep)
     functionArg = (ArgLiteral <$> try pStrictString) <|> (InvocationArg <$> try pFunctionCall)
 
+
 pStrictString :: Parser String
-pStrictString = between openQuote closeQuote chars
+pStrictString = label "pStrictString" $ between openQuote closeQuote chars
   where
     openQuote = char '\''
     closeQuote = L.lexeme hspace $ char '\''
@@ -129,49 +142,55 @@ pStrictString = between openQuote closeQuote chars
     regularChar = noneOf "'"
     chars = many $ try escapedQuote <|> try escapedBackslash <|> regularChar
 
+
 pFunctionCapture :: LetDefP
-pFunctionCapture = do
-  captureTerms <- L.lexeme hspace $ between captureOpen captureClose (sepEndBy pCaptureTerm pSeparator)
-  L.symbol hspace1 "as"
-  captureName <- L.lexeme hspace $ pLetName
-  return $ letDefCaptureInvocation captureName (sequence_ captureTerms)
+-- pFunctionCapture = label "pFunctionCapture" $ letDefCaptureInvocation <$> captureName <*> captureTerms
+pFunctionCapture = label "pFunctionCapture" $ do
+  captureTerms <- sequence_ <$> L.lexeme hspace pCaptureTerms
+  captureName <- L.symbol hspace1 "as" *> L.lexeme hspace pLetName
+  return $ letDefCaptureInvocation captureName captureTerms
   where
     captureOpen = L.symbol hspace "capture("
     captureClose = L.symbol hspace ")"
     pSeparator = L.symbol hspace ","
     pCaptureTerm = (letDefInvocation <$> pFunctionCall) <|> (letDefLiteral <$> pStrictString)
+    pCaptureTerms = between captureOpen captureClose (sepEndBy pCaptureTerm pSeparator)
+    -- captureTerms = sequence_ <$> L.lexeme hspace pCaptureTerms
+    -- captureName = L.symbol hspace1 "as" *> L.lexeme hspace pLetName
 
-{-
-<let-declaration-block-begin> := let
-<let-declaration>             := <indent><let-name> = <let-definition>
 
-<indent>                      := 2 spaces
+pMatchDef :: Parser (MatchDef ())
+pMatchDef = label "pMatchDef" $ sequence_ <$> many matchTerms
+  where
+    matchTerms = (matchLiteral <$> pMatchLiteral) <|> pMatchExpansion
+    -- TODO: allow unbackslashed if $ but not ${?
+    escapedCashChar = string "\\$" $> '$'
+    regularChar = noneOf "$\n"
+    pMatchLiteral = some $ escapedCashChar <|> regularChar
+    pMatchExpansion = letDefToMatchDef <$> pLetExpansion
 
-<let-name>                    := [A-Za-z_]<let-name-rest>
-<let-name-rest>               := [A-Za-z0-9_]<let-name-rest> | <nil>
 
-<let-definition>              := <let-string> | <function-capture> | <function-call>
+pSubDef :: Parser (SubDef ())
+pSubDef = label "pSubDef" $ sequence_ <$> many subTerms
+  where
+    subTerms = (subLiteral <$> try pSubLiteral) <|> pSubCaptureRef
+    -- TODO: allow empty literals
+    pSubLiteral = some $ escapedCashChar <|> regularChar
+    escapedCashChar = string "\\$" $> '$'
+    regularChar = noneOf "$\n"
+    pSubCaptureRef = between openBrace closeBrace (sepEndBy1 pLetName pSeparator) 
+        <&> (\refs -> case refs of
+                [ref] -> subCaptureReference ref
+                refs -> subScopedCaptureReference refs)
+    openBrace = L.lexeme hspace $ string "${"
+    closeBrace = L.lexeme hspace $ string "}"
+    pSeparator = char '.'
 
-<let-string>                  := '<let-string-terms>'
-<let-string-terms>            := <let-string-term><let-string-terms> | <nil>
-<let-string-term>             := <let-expansion> | <let-string-literal>
-<let-string-literal>          := [::anychar::, $'s and ''s escaped]<let-string-literal> | <nil>
 
-<let-expansion>               := ${<let-expansion-terms>}
-<let-expansion-terms>         := <let-expansion-term>, <let_expansion-terms> | <let-expansion-term> | <nil>
-<let-expansion-term>          := <function-call> | <function-capture> | <let-string>
-
-<function-call>               := <function-name>(<function-args>)
-<function-name>               := <let-name>
-<function-args>               := <function-arg>, <function-args> | <function-arg> | <nil>
-<function-arg>                := <strict-string> | <function-call>
-
-<strict-string>               := '<strict-string-chars>'
-<strict-string-chars>         := <strict-string-char><strict-string-chars> | <nil>
-<strict-string-char>          := [::anychar::, 's escaped]
-
-<function-capture>            := capture(<function-capture-terms>) as <function-capture-name>
-<function-capture-terms>      := <function-capture-term>, <function-capture-terms> | <function-capture-term>
-<function-capture-term>       := <function-call> | <strict-string>
-<function-capture-name>       := <let-name>
--}
+letDefToMatchDef :: LetDef a -> MatchDef a
+letDefToMatchDef  = iterM processLine
+  where 
+    processLine letDef = case letDef of
+      LetDefLiteral literal next -> matchLiteral literal >> next
+      LetDefInvocation funcInvocation next -> matchInvocation funcInvocation >> next
+      LetDefCaptureInvocation name def next -> matchCaptureInvocation name (letDefToMatchDef def) >> next

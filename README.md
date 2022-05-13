@@ -9,11 +9,10 @@ An example program:
       many_imports := '${star(single_import())}'
       filename := '${star(noneof('/ '))}'
       whole_path := '${capture(filename()) as root, '/', star(filename(), '/'), capture(filename()) as filename}'
-    in
     match
     import {${capture(many_imports()) as imports}} from '${capture(whole_path()) as whole_path}';
     substitute
-    import {${imports}} from '${whole_path.root}/some/directory/string/${whole_path.filename}';
+    import {ExtraImport, ${imports}} from '${whole_path.root}/some/directory/string/${whole_path.filename}';
 
 This program produces a sed-style regex which transforms the string 
 
@@ -21,19 +20,19 @@ This program produces a sed-style regex which transforms the string
 
 into the string
 
-    import {Module1, Module2} from 'root/move/to/some/new/directory/file';
+    import {ExtraImport, Module1, Module2} from 'root/move/to/some/new/directory/file';
 
 In particular, it will produce:
 
-    s/import {\(\([A-Za-z0-9]*\(, \)\?\)*\)} from '\(\([^/ ]*\)\/\([^/ ]*\/\)*\([^/ ]*\)\)'/import {\1} from'\5\/move\/to\/some\/new\/directory\/\7/g
+    s/import {\(\([A-Za-z0-9]*\(, \)\?\)*\)} from '\(\([^/ ]*\)\/\([^/ ]*\/\)*\([^/ ]*\)\)'/import {ExtraImport, \1} from'\5\/move\/to\/some\/new\/directory\/\7/g
 
 Copying this to sed...
 
     $ echo "import {Module1, Module2} from 'root/of/my/initial/file'" \
-        | sed "s/import {\(\([A-Za-z0-9]*\(, \)\?\)*\)} from '\(\([^/ ]*\)\/\([^/ ]*\/\)*\([^/ ]*\)\)'/import {\1} from'\5\/move\/to\/some\/new\/directory\/\7/g"
+        | sed -E "s/import {\(\([A-Za-z0-9]*\(, \)\?\)*\)} from '\(\([^/ ]*\)\/\([^/ ]*\/\)*\([^/ ]*\)\)'/import {ExtraImport, \1} from'\5\/move\/to\/some\/new\/directory\/\7/g"
     import {Module1, Module2} from 'root/move/to/some/new/directory/file
 
-Some other expressions you can use:
+Some other expressions you will be able to use (soon!)
     
     a_lot_of_characters := '${star(any())}'
     at_least_one_hyphen := '${plus('-')}'
@@ -49,4 +48,4 @@ Some other expressions you can use:
 - [ ] Compile-time checking of regex validity
 - [ ] Moves [ to the front of a character class when it is not a part of a collating symbol
 - [ ] User-defined functions can accept arguments?
-- [ ] Add `plus()`, `any()`, `start()`, and `end()`
+- [ ] Add `plus()`, `any()`, `start()`, `count()`, and `end()`

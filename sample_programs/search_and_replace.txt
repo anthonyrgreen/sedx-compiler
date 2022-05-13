@@ -3,7 +3,6 @@ let
   many_imports := '${star(single_import())}'
   filename := '${star(noneof('/ '))}'
   whole_path := '${capture(filename()) as root, '/', star(filename(), '/'), capture(filename()) as filename}'
-in
 match
 import {${capture(many_imports()) as imports}} from '${capture(whole_path()) as whole_path}';
 substitute
