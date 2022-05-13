@@ -140,6 +140,7 @@ liftToFreeTStack :: (Monad m, Functor f) => (forall a. a -> f a) -> FreeT f m ()
 liftToFreeTStack constructorFunc = hoistFreeT generalize $ liftF $ constructorFunc ()
 
 
+
 -- TODO: Should user-defined functions accept inputs?
 data FuncInvocation = UserDefinedFuncInvocation { funcName :: String }
                     | BuiltInFuncInvocation { func :: BuiltInFunc, args :: [FuncArg] }

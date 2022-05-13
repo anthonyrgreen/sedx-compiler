@@ -3,6 +3,7 @@ module Lib
     , escapeProgramMatch
     , escapeOptimizedProgramMatch
     , printMatchAndSub
+    , repErrorOrSuccess
     ) where
 
 import ProgramAst
@@ -27,8 +28,8 @@ linkAstMatch :: ProgramAst -> Either String (LinkedMatch ())
 linkAstMatch programAst = runFreeTExceptT $ linkMatch (letDecls programAst) (matchDef programAst)
 
 
-repErrorOrSuccess :: Either String String -> String
-repErrorOrSuccess (Left err) = "Error: " ++ err
+repErrorOrSuccess :: Show a => Either a String -> String
+repErrorOrSuccess (Left err) = "Error: " ++ show err
 repErrorOrSuccess (Right success) = success
 
 escapeProgramMatch :: Program () -> String
@@ -36,11 +37,7 @@ escapeProgramMatch program = repErrorOrSuccess $ do
   ast <- readProgramAst program
   linkedMatch <- linkAstMatch ast
   return $ escapeLinkedMatch linkedMatch
-  -- ast 
-  --   |> readProgramAst 
-  --   |> linkAstMatch 
-  --   |> fmap escapeLinkedMatch 
-  --   |> repErrorOrSuccess
+
 
 escapeOptimizedProgramMatch :: Program () -> String
 escapeOptimizedProgramMatch program = repErrorOrSuccess $ do
@@ -48,12 +45,6 @@ escapeOptimizedProgramMatch program = repErrorOrSuccess $ do
   linkedMatch <- linkAstMatch ast
   let optimizedLinkedMatch = optimizeLinkedMatch Set.empty linkedMatch
   return $ escapeLinkedMatch optimizedLinkedMatch
-  -- ast 
-  --   |> readProgramAst 
-  --   |> linkAstMatch 
-  --   |> fmap (optimizeLinkedMatch Set.empty) 
-  --   |> fmap escapeLinkedMatch 
-  --   |> repErrorOrSuccess
 
 
 -- slightly wrong. Capture groups will get screwed up because we decide whether

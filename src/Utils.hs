@@ -57,6 +57,7 @@ isSingleCharLiteralOrBracket args = go (getCommands args)
       [LinkedMatchBuiltInFunc NoneOf _ _] -> True
       _ -> False
 
+
 getCommands :: LinkedMatch () -> [LinkedMatchF ()]
 getCommands linkedMatch = execWriter $ iterM processLine linkedMatch
   where
@@ -66,4 +67,8 @@ getCommands linkedMatch = execWriter $ iterM processLine linkedMatch
     processLine (LinkedMatchUnnamedCaptureGroup linkedMatch next) = tell [(LinkedMatchUnnamedCaptureGroup linkedMatch ())] >> next
     processLine (LinkedMatchNamedCaptureGroup name linkedMatch next) = tell [(LinkedMatchNamedCaptureGroup name linkedMatch ())] >> next
     processLine (LinkedMatchBuiltInFunc func args next) = tell [(LinkedMatchBuiltInFunc func args ())] >> next
+
+
+hasSubstitute :: ProgramAst a -> Bool
+hasSubstitute ast = substitute ast == return ()
 
