@@ -17,7 +17,6 @@ import Control.Monad.Morph
 import ProgramAst
 
 
-
 -- Reverse function application
 infixl 1  |>
 (|>) :: a -> (a -> b) -> b
@@ -67,8 +66,4 @@ getCommands linkedMatch = execWriter $ iterM processLine linkedMatch
     processLine (LinkedMatchUnnamedCaptureGroup linkedMatch next) = tell [(LinkedMatchUnnamedCaptureGroup linkedMatch ())] >> next
     processLine (LinkedMatchNamedCaptureGroup name linkedMatch next) = tell [(LinkedMatchNamedCaptureGroup name linkedMatch ())] >> next
     processLine (LinkedMatchBuiltInFunc func args next) = tell [(LinkedMatchBuiltInFunc func args ())] >> next
-
-
-hasSubstitute :: ProgramAst a -> Bool
-hasSubstitute ast = substitute ast == return ()
 

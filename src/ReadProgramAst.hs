@@ -3,6 +3,7 @@
 
 module ReadProgramAst
   ( readProgramAst
+  , hasSubstitute
   , ProgramAst(..)
   ) where
 
@@ -95,4 +96,5 @@ getArgDependencies (ArgLiteral _) = []
 getArgDependencies (InvocationArg funcInvocation) = getFuncInvocationDependencies funcInvocation
 
 
-
+hasSubstitute :: ProgramAst -> Bool
+hasSubstitute ast = subDef ast == return ()
