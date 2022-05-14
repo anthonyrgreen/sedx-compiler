@@ -1,4 +1,4 @@
-# sed-transpile
+# sedx-compiler
 
 Regexes should be easy to write, easy to read, and easy to run. Regrettably, only the third is true of `sed`-style regexes. The aim of this project is to create a mini-language for building regexes. Its programs can be transpiled into sed-style regexes and run easily.
 
