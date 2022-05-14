@@ -21,5 +21,6 @@ sedReplacementTests = do
 
 
 
-runSedxAndReplace :: IO Bytestring
-runSedxAndReplace = putStrLn "Test suite not yet implemented"
+runSedxAndReplace :: String -> String -> IO Bytestring
+runSedxAndReplace sedxFile sedInput = undefined
+  

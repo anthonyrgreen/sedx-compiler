@@ -14,7 +14,7 @@ import Control.Monad.Trans.Except
 import Control.Monad.Trans.Free
 import Control.Monad.Trans.Writer.Lazy
 import Control.Monad.Morph
-
+import ProgramAst
 
 -- Reverse function application
 infixl 1  |>
