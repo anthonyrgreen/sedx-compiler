@@ -50,8 +50,7 @@ upToNextLine = (hspace *> eol) $> ()
 pProgram :: Parser (Program ())
 pProgram = do
   L.symbol upToNextLine "let"
-  letIndent <- L.indentGuard space GT pos1
-  letDecls <- many (pLetDecl letIndent) <&> sequence_
+  letDecls <- try pLetDecls <|> return (return ())
   L.symbol upToNextLine "match"
   matchDef <- L.lexeme upToNextLine $ pMatchDef <&> ProgramAst.match
   L.symbol upToNextLine "substitute"
@@ -61,6 +60,9 @@ pProgram = do
     matchDef
     subDef
 
+pLetDecls = do
+  letIndent <- L.indentGuard space GT pos1
+  many (pLetDecl letIndent) <&> sequence_
 
 pLetDecl :: Pos -> Parser (Program ())
 pLetDecl letIndent = do
@@ -97,7 +99,7 @@ pLetExpansion :: LetDefP
 pLetExpansion = label "pLetExpansion" $ sequence_ <$> pLetExpansionTerms
   where
     openBrace = L.lexeme hspace $ string "${"
-    closeBrace = L.lexeme hspace $ string "}"
+    closeBrace = string "}" -- TODO: we need a space-consuming version of this for non-quoted let expansions
     pLetSeparator = L.symbol hspace ","
     pLetExpansionTerm = L.lexeme hspace $ pLetString <|> try pFunctionCapture <|> (letDefInvocation <$> pFunctionCall)
     pLetExpansionTerms = between openBrace closeBrace $ sepEndBy1 pLetExpansionTerm pLetSeparator
@@ -184,7 +186,7 @@ pSubDef = label "pSubDef" $ sequence_ <$> many subTerms
                 [ref] -> subCaptureReference ref
                 refs -> subScopedCaptureReference refs)
     openBrace = L.lexeme hspace $ string "${"
-    closeBrace = L.lexeme hspace $ string "}"
+    closeBrace = string "}"
     pSeparator = char '.'
 
 
