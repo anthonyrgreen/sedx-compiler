@@ -48,6 +48,5 @@ runSedxAndReplace :: String -> String -> IO BC.ByteString
 runSedxAndReplace sedxFile sedInput = do
   prog <- (parse pProgram sedxFile <$> readFile sedxFile) >>= either (fail . errorBundlePretty) pure
   input <- readFile sedInput
-  -- BC.pack <$> readProcess "echo" [printMatchAndSub prog] input
   BC.pack <$> readProcess "gsed" ["-e", printMatchAndSub prog] input
 
