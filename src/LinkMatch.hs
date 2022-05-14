@@ -3,20 +3,20 @@ module LinkMatch
     ) where
 
 
-import ProgramAst
-import ReadProgramAst
-import Control.Monad.Writer.Lazy
-import Control.Monad.Trans.Free
-import Control.Monad.State
-import Data.Map.Strict as Map
-import Data.Maybe
-import Data.Functor.Identity
-import Utils
-import Control.Monad.Trans
-import Control.Monad.Morph
-import Control.Monad.Except
-import Control.Monad.Trans.Except
-import Control.Monad.Trans.Maybe
+import           Control.Monad.Except
+import           Control.Monad.Morph
+import           Control.Monad.State
+import           Control.Monad.Trans
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.Free
+import           Control.Monad.Trans.Maybe
+import           Control.Monad.Writer.Lazy
+import           Data.Functor.Identity
+import           Data.Map.Strict            as Map
+import           Data.Maybe
+import           ProgramAst
+import           ReadProgramAst
+import           Utils
 
 
 linkMatch :: Map.Map String (LetDef ()) -> MatchDef () -> LinkedMatchT (Except String) ()
@@ -47,10 +47,10 @@ linkFuncInvocation letDeclsByName func = case func of
                         then concattedLinkedArgs
                         else linkedMatchUnnamedCaptureGroup concattedLinkedArgs
     case func of
-      AnyOf -> linkedMatchBuiltInFunc AnyOf concattedLinkedArgs
+      AnyOf  -> linkedMatchBuiltInFunc AnyOf concattedLinkedArgs
       NoneOf -> linkedMatchBuiltInFunc NoneOf concattedLinkedArgs
-      Star -> linkedMatchBuiltInFunc Star processedArgs
-      Maybe -> linkedMatchBuiltInFunc Maybe processedArgs
+      Star   -> linkedMatchBuiltInFunc Star processedArgs
+      Maybe  -> linkedMatchBuiltInFunc Maybe processedArgs
 
 
 linkLet :: Map.Map String (LetDef ()) -> LetDefF (LinkedMatchT (Except String) ()) -> LinkedMatchT (Except String) ()

@@ -10,15 +10,15 @@ module ExamplePrograms
     ) where
 
 
-import Control.Monad.Trans.Free
-import Control.Monad.State
-import ProgramAst
-import BuiltInFunctions
-import ReadProgramAst
-import Data.Map.Strict as Map
-import Data.Maybe
-import EscapeMatch
-import Lib
+import           BuiltInFunctions
+import           Control.Monad.State
+import           Control.Monad.Trans.Free
+import           Data.Map.Strict          as Map
+import           Data.Maybe
+import           EscapeMatch
+import           Lib
+import           ProgramAst
+import           ReadProgramAst
 
 
 single_import :: LetDef ()

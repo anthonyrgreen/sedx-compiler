@@ -6,24 +6,24 @@ module EscapeMatch
     ) where
 
 
-import ProgramAst
-import ReadProgramAst
-import Control.Monad.Writer.Lazy
-import Control.Monad.Trans.Free
-import Control.Monad.State
-import Data.Map.Strict as Map
-import Data.Maybe
-import Data.Functor.Identity
-import Utils
-import Control.Monad.Trans
-import Control.Monad.Morph
-import Control.Monad.Except
-import Control.Monad.Trans.Except
-import Control.Monad.Trans.Maybe
-import LinkMatch
-import OptimizeMatch
-import Data.Set as Set
-import Data.Foldable as Foldable
+import           Control.Monad.Except
+import           Control.Monad.Morph
+import           Control.Monad.State
+import           Control.Monad.Trans
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.Free
+import           Control.Monad.Trans.Maybe
+import           Control.Monad.Writer.Lazy
+import           Data.Foldable              as Foldable
+import           Data.Functor.Identity
+import           Data.Map.Strict            as Map
+import           Data.Maybe
+import           Data.Set                   as Set
+import           LinkMatch
+import           OptimizeMatch
+import           ProgramAst
+import           ReadProgramAst
+import           Utils
 
 
 escapeLinkedMatch :: LinkedMatch () -> String
@@ -123,4 +123,4 @@ mkGroup1 string = do
 
 -- -- NOTE: does not handle collating symbols or equivalence classes
 -- charClassEscape :: String -> String
--- charClassEscape 
+-- charClassEscape

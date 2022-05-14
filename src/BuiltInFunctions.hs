@@ -6,7 +6,7 @@ module BuiltInFunctions
     , maybeLiteral
     ) where
 
-import ProgramAst
+import           ProgramAst
 
 anyOfLiteral :: String -> FuncInvocation
 anyOfLiteral string = BuiltInFuncInvocation AnyOf [ArgLiteral string]

@@ -1,4 +1,6 @@
-{-# LANGUAGE DeriveTraversable, FlexibleInstances, RankNTypes #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RankNTypes        #-}
 
 
 module ProgramAst
@@ -41,10 +43,10 @@ module ProgramAst
     , linkedSubBackReference
     ) where
 
-import Text.Show.Deriving
-import Data.Functor.Classes
-import Control.Monad.Trans.Free
-import Control.Monad.Morph
+import           Control.Monad.Morph
+import           Control.Monad.Trans.Free
+import           Data.Functor.Classes
+import           Text.Show.Deriving
 
 {- Program commands -}
 

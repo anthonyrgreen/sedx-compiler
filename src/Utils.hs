@@ -1,4 +1,4 @@
-module Utils 
+module Utils
     ( (|>)
     , hoistMaybe
     , hoistMaybeToExceptT
@@ -9,12 +9,12 @@ module Utils
     ) where
 
 
-import Control.Monad.Trans.Maybe
-import Control.Monad.Trans.Except
-import Control.Monad.Trans.Free
-import Control.Monad.Trans.Writer.Lazy
-import Control.Monad.Morph
-import ProgramAst
+import           Control.Monad.Morph
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.Free
+import           Control.Monad.Trans.Maybe
+import           Control.Monad.Trans.Writer.Lazy
+import           ProgramAst
 
 -- Reverse function application
 infixl 1  |>
@@ -37,7 +37,7 @@ concatMonad = Prelude.foldl (>>) (return ())
 
 applyExcept :: Traversable f => FreeT f (Except e) a -> (Free f a -> Free f a) -> FreeT f (Except e) a
 applyExcept arg func = case runExcept (joinFreeT arg) of
-  Left err -> arg
+  Left err      -> arg
   Right success -> hoistFreeT generalize $ func success
 
 
@@ -50,10 +50,10 @@ isSingleCharLiteralOrBracket :: LinkedMatch () -> Bool
 isSingleCharLiteralOrBracket args = go (getCommands args)
   where
     go commands = case commands of
-      [LinkedMatchLiteral str _] -> length str == 1
-      [LinkedMatchBuiltInFunc AnyOf _ _] -> True
+      [LinkedMatchLiteral str _]          -> length str == 1
+      [LinkedMatchBuiltInFunc AnyOf _ _]  -> True
       [LinkedMatchBuiltInFunc NoneOf _ _] -> True
-      _ -> False
+      _                                   -> False
 
 
 getCommands :: LinkedMatch () -> [LinkedMatchF ()]

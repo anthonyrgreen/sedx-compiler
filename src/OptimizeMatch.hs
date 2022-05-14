@@ -3,11 +3,11 @@ module OptimizeMatch
     ) where
 
 
-import ProgramAst
-import Data.Set
-import Control.Monad
-import Control.Monad.Trans.Free
-import Utils
+import           Control.Monad
+import           Control.Monad.Trans.Free
+import           Data.Set
+import           ProgramAst
+import           Utils
 
 optimizeLinkedMatch :: Set [String] -> LinkedMatch () -> LinkedMatch ()
 optimizeLinkedMatch namedPaths match =

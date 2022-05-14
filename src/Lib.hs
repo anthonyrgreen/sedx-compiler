@@ -6,19 +6,19 @@ module Lib
     , repErrorOrSuccess
     ) where
 
-import ProgramAst
-import ReadProgramAst
-import Data.Set as Set
-import Utils
-import OptimizeMatch
-import LinkMatch
-import EscapeMatch
-import EscapeSub
-import LinkSub
+import           Data.Set       as Set
+import           EscapeMatch
+import           EscapeSub
+import           LinkMatch
+import           LinkSub
+import           OptimizeMatch
+import           ProgramAst
+import           ReadProgramAst
+import           Utils
 
 
 linkAndEscape :: ProgramAst -> String
-linkAndEscape state = 
+linkAndEscape state =
   let linkedMatch = linkAstMatch state
   in case linkedMatch of
     Left err -> "Error: " ++ err
@@ -29,7 +29,7 @@ linkAstMatch programAst = runFreeTExceptT $ linkMatch (letDecls programAst) (mat
 
 
 repErrorOrSuccess :: Show a => Either a String -> String
-repErrorOrSuccess (Left err) = "Error: " ++ show err
+repErrorOrSuccess (Left err)      = "Error: " ++ show err
 repErrorOrSuccess (Right success) = success
 
 escapeProgramMatch :: Program () -> String

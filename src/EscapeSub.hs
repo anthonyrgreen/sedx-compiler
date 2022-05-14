@@ -1,11 +1,11 @@
-module EscapeSub 
+module EscapeSub
   ( escapeLinkedSub
   ) where
 
 
-import ProgramAst
-import Control.Monad.Trans.Free
-import Control.Monad.Writer.Lazy
+import           Control.Monad.Trans.Free
+import           Control.Monad.Writer.Lazy
+import           ProgramAst
 
 
 -- TODO: use custom separator char (we're using '/' implicitly)
@@ -18,6 +18,6 @@ escapeLinkedSub = execWriter . iterM processLine
 
 escapeLiteral = concatMap escapeChar
   where
-    escapeChar '/' = "\\/"
+    escapeChar '/'  = "\\/"
     escapeChar '\\' = "\\\\"
-    escapeChar c = [c]
+    escapeChar c    = [c]

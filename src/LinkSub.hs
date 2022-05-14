@@ -4,19 +4,19 @@ module LinkSub
   ) where
 
 
-import ProgramAst
-import Control.Monad.Except
-import Control.Monad.Trans.Except
-import Control.Monad.Trans.Maybe
-import ReadProgramAst
-import Control.Monad.Trans.Free
-import Control.Monad.Morph
-import Data.Set as Set
-import Control.Monad.Writer.Lazy
-import Control.Monad.State.Lazy
-import Data.List
-import Data.Map.Strict as Map
-import Utils
+import           Control.Monad.Except
+import           Control.Monad.Morph
+import           Control.Monad.State.Lazy
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.Free
+import           Control.Monad.Trans.Maybe
+import           Control.Monad.Writer.Lazy
+import           Data.List
+import           Data.Map.Strict            as Map
+import           Data.Set                   as Set
+import           ProgramAst
+import           ReadProgramAst
+import           Utils
 
 
 linkSub :: ProgramAst -> LinkedMatch () -> LinkedSubT (Except String) ()

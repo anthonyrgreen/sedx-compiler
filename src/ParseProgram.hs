@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 module ParseProgram where
--- module ParseProgram 
+-- module ParseProgram
 --     ( parseProgram
 --     , pLetDef
 --     , pLetName
@@ -10,18 +10,18 @@ module ParseProgram where
 --     , testpLetDef
 --     ) where
 
-import Data.Char
-import ProgramAst
-import PrintProgram
-import Text.Megaparsec
-import Text.Megaparsec.Char
+import           Control.Monad
+import           Control.Monad.Trans.Free
+import           Data.Char
+import           Data.Functor
+import           Data.Void
+import           PrintProgram
+import           ProgramAst
+import           Text.Megaparsec
+import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Data.Void
-import Data.Functor
-import Control.Monad
-import Text.Megaparsec.Debug
-import Text.Megaparsec.Pos
-import Control.Monad.Trans.Free
+import           Text.Megaparsec.Debug
+import           Text.Megaparsec.Pos
 
 type Parser = Parsec Void String
 type LetDefP = Parser (LetDef ())
@@ -122,10 +122,10 @@ pFunctionCall = label "pFunctionCall" $ do
   funcName <- pLetName
   funcArgs <- pFuncArgs
   return $ case funcName of
-    "star" -> BuiltInFuncInvocation Star funcArgs
-    "anyof" -> BuiltInFuncInvocation AnyOf funcArgs
-    "noneof" -> BuiltInFuncInvocation NoneOf funcArgs
-    "maybe" -> BuiltInFuncInvocation Maybe funcArgs
+    "star"     -> BuiltInFuncInvocation Star funcArgs
+    "anyof"    -> BuiltInFuncInvocation AnyOf funcArgs
+    "noneof"   -> BuiltInFuncInvocation NoneOf funcArgs
+    "maybe"    -> BuiltInFuncInvocation Maybe funcArgs
     customName -> UserDefinedFuncInvocation funcName
   where
     argOpen = L.symbol hspace "("
@@ -184,7 +184,7 @@ pSubDef = label "pSubDef" $ sequence_ <$> many subTerms
     pSubCaptureRef = between openBrace closeBrace (sepEndBy1 pLetName pSeparator)
         <&> (\case
                 [ref] -> subCaptureReference ref
-                refs -> subScopedCaptureReference refs)
+                refs  -> subScopedCaptureReference refs)
     openBrace = L.lexeme hspace $ string "${"
     closeBrace = string "}"
     pSeparator = char '.'

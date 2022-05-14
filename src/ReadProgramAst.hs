@@ -8,32 +8,32 @@ module ReadProgramAst
   ) where
 
 
-import ProgramAst
-import Data.Map.Strict as Map
-import Data.List as List
-import Control.Monad.Trans.Free
-import Control.Monad.State
-import Data.Maybe
-import Control.Arrow
-import Data.Functor.Identity
-import Control.Monad.Writer.Lazy
-import Utils
-import PrintProgram
-import Control.Monad.Trans.Except
+import           Control.Arrow
+import           Control.Monad.State
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.Free
+import           Control.Monad.Writer.Lazy
+import           Data.Functor.Identity
+import           Data.List                  as List
+import           Data.Map.Strict            as Map
+import           Data.Maybe
+import           PrintProgram
+import           ProgramAst
+import           Utils
 
 
 readProgramAst :: Program a -> Either String ProgramAst
 readProgramAst program = runExcept $ execStateT (iterM readLine program) emptyState
   where
     readLine :: ProgramF (StateT ProgramAst (Except String) a) -> StateT ProgramAst (Except String) a
-    readLine (LetDecl name def next) = readLetDef name def >> next
-    readLine (Match match next) = readMatch match >> next
+    readLine (LetDecl name def next)      = readLetDef name def >> next
+    readLine (Match match next)           = readMatch match >> next
     readLine (Substitute substitute next) = readSubstitute substitute >> next
 
 
 data ProgramAst = ProgramAst { letDecls :: Map.Map String (LetDef ())
                              , matchDef :: MatchDef ()
-                             , subDef :: SubDef ()
+                             , subDef   :: SubDef ()
                              }
 
 

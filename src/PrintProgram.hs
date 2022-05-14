@@ -9,11 +9,11 @@ module PrintProgram
   ) where
 
 
-import Text.Show.Deriving
-import ProgramAst
-import Control.Monad.Trans.Free
-import Data.List
-import Utils
+import           Control.Monad.Trans.Free
+import           Data.List
+import           ProgramAst
+import           Text.Show.Deriving
+import           Utils
 
 instance Show FuncInvocation where
   show (UserDefinedFuncInvocation name) = "UserFuncInvoc: name = " ++ name
@@ -21,7 +21,7 @@ instance Show FuncInvocation where
 
 
 instance Show FuncArg where
-  show (ArgLiteral string) = "Lit: \"" ++ string ++ "\""
+  show (ArgLiteral string)   = "Lit: \"" ++ string ++ "\""
   show (InvocationArg invoc) = "Invoc: " ++ show invoc
 
 

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-stack exec 
+stack exec
