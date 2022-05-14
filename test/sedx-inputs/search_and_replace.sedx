@@ -6,4 +6,4 @@ let
 match
 import {${capture(many_imports()) as imports}} from '${capture(whole_path()) as whole_path}';
 substitute
-import {${ExtraImport, imports}} from '${whole_path.root}/some/directory/string/${whole_path.filename}';
+import {ExtraImport, ${imports}} from '${whole_path.root}/some/directory/string/${whole_path.filename}';
