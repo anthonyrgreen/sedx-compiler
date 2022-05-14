@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module ParseProgram where
 -- module ParseProgram 
 --     ( parseProgram
@@ -40,10 +41,10 @@ file_str = "let\n\
 \substitute\n\
 \import {${imports}} from '${whole_path.root}/some/directory/string/${whole_path.filename}';\n"
 test_pLetDef :: String -> IO ()
-test_pLetDef s = parseTest (pLetDecl $ mkPos 2) s 
+test_pLetDef = parseTest (pLetDecl $ mkPos 2)
 
 
-upToNextLine = hspace *> eol *> return ()
+upToNextLine = (hspace *> eol) $> ()
 
 
 pProgram :: Parser (Program ())
@@ -178,8 +179,8 @@ pSubDef = label "pSubDef" $ sequence_ <$> many subTerms
     pSubLiteral = some $ escapedCashChar <|> regularChar
     escapedCashChar = string "\\$" $> '$'
     regularChar = noneOf "$\n"
-    pSubCaptureRef = between openBrace closeBrace (sepEndBy1 pLetName pSeparator) 
-        <&> (\refs -> case refs of
+    pSubCaptureRef = between openBrace closeBrace (sepEndBy1 pLetName pSeparator)
+        <&> (\case
                 [ref] -> subCaptureReference ref
                 refs -> subScopedCaptureReference refs)
     openBrace = L.lexeme hspace $ string "${"
@@ -189,7 +190,7 @@ pSubDef = label "pSubDef" $ sequence_ <$> many subTerms
 
 letDefToMatchDef :: LetDef a -> MatchDef a
 letDefToMatchDef  = iterM processLine
-  where 
+  where
     processLine letDef = case letDef of
       LetDefLiteral literal next -> matchLiteral literal >> next
       LetDefInvocation funcInvocation next -> matchInvocation funcInvocation >> next

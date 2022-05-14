@@ -1,4 +1,4 @@
-module OptimizeMatch 
+module OptimizeMatch
     ( optimizeLinkedMatch
     ) where
 
@@ -10,26 +10,26 @@ import Control.Monad.Trans.Free
 import Utils
 
 optimizeLinkedMatch :: Set [String] -> LinkedMatch () -> LinkedMatch ()
-optimizeLinkedMatch namedPaths match = 
-    match 
-      |> removeUnusedNamesFromNamedCaptureGroups namedPaths 
+optimizeLinkedMatch namedPaths match =
+    match
+      |> removeUnusedNamesFromNamedCaptureGroups namedPaths
       |> removeUnneededUnnamedCaptureGroups
 
 
 removeUnusedNamesFromNamedCaptureGroups :: Set [String] -> LinkedMatch () -> LinkedMatch ()
-removeUnusedNamesFromNamedCaptureGroups namedPaths linkedMatch = helper [] linkedMatch
+removeUnusedNamesFromNamedCaptureGroups namedPaths = helper []
   where
-    helper existingPath linkedMatch = iterM (processLine existingPath) linkedMatch
-    processLine existingPath (LinkedMatchNamedCaptureGroup name nestedDef next) = 
+    helper existingPath = iterM (processLine existingPath)
+    processLine existingPath (LinkedMatchNamedCaptureGroup name nestedDef next) =
       let newPath = existingPath ++ [name]
           nestedDefProcessed = helper newPath nestedDef
-          lineProcessed = 
+          lineProcessed =
             if newPath `member` namedPaths
             then linkedMatchNamedCaptureGroup name nestedDefProcessed
             else linkedMatchUnnamedCaptureGroup nestedDefProcessed
       in lineProcessed >> next
-    processLine existingPath (LinkedMatchUnnamedCaptureGroup nestedDef next) = 
-      let nestedDefProcessed = helper ["This path will never exist"] nestedDef 
+    processLine existingPath (LinkedMatchUnnamedCaptureGroup nestedDef next) =
+      let nestedDefProcessed = helper ["This path will never exist"] nestedDef
       in linkedMatchUnnamedCaptureGroup nestedDefProcessed >> next
     processLine existingPath (LinkedMatchBuiltInFunc func nestedDefs next) =
       let nestedDefsProcessed = helper ["This path will never exist"] nestedDefs
@@ -40,10 +40,10 @@ removeUnusedNamesFromNamedCaptureGroups namedPaths linkedMatch = helper [] linke
 removeUnneededUnnamedCaptureGroups :: LinkedMatch () -> LinkedMatch ()
 removeUnneededUnnamedCaptureGroups = iterM processLine
   where
-    processLine (LinkedMatchNamedCaptureGroup name nestedDef next) = 
+    processLine (LinkedMatchNamedCaptureGroup name nestedDef next) =
       let nestedDefProcessed = removeUnneededUnnamedCaptureGroups nestedDef
       in linkedMatchNamedCaptureGroup name nestedDefProcessed >> next
-    processLine (LinkedMatchUnnamedCaptureGroup nestedDef next) = 
+    processLine (LinkedMatchUnnamedCaptureGroup nestedDef next) =
       removeUnneededUnnamedCaptureGroups nestedDef >> next
     processLine (LinkedMatchLiteral literal next) = linkedMatchLiteral literal >> next
     processLine (LinkedMatchBuiltInFunc func nestedDefs next) =
@@ -51,7 +51,7 @@ removeUnneededUnnamedCaptureGroups = iterM processLine
         removeNestedUnnamedCaptureGroups = isSingleCharLiteralOrBracket nestedDefs
         builtInFuncUnprocessed = linkedMatchBuiltInFunc func nestedDefs
         builtInFuncProcessed = linkedMatchBuiltInFunc func (removeUnneededUnnamedCaptureGroups nestedDefs)
-      in 
+      in
         case func of
           Star -> (if removeNestedUnnamedCaptureGroups then builtInFuncProcessed else builtInFuncUnprocessed) >> next
           Maybe -> (if removeNestedUnnamedCaptureGroups then builtInFuncProcessed else builtInFuncUnprocessed) >> next

@@ -20,7 +20,7 @@ import Control.Monad.Writer.Lazy
 import Utils
 import PrintProgram
 import Control.Monad.Trans.Except
-  
+
 
 readProgramAst :: Program a -> Either String ProgramAst
 readProgramAst program = runExcept $ execStateT (iterM readLine program) emptyState
@@ -31,7 +31,7 @@ readProgramAst program = runExcept $ execStateT (iterM readLine program) emptySt
     readLine (Substitute substitute next) = readSubstitute substitute >> next
 
 
-data ProgramAst = ProgramAst { letDecls :: Map.Map String (LetDef ()) 
+data ProgramAst = ProgramAst { letDecls :: Map.Map String (LetDef ())
                              , matchDef :: MatchDef ()
                              , subDef :: SubDef ()
                              }
@@ -41,8 +41,8 @@ emptyState = ProgramAst Map.empty (return ()) (return ())
 
 
 instance Show ProgramAst where
-  show (ProgramAst letDecls matchDef subDef) = 
-    "LetDecls:\n" ++ showLetDecls letDecls 
+  show (ProgramAst letDecls matchDef subDef) =
+    "LetDecls:\n" ++ showLetDecls letDecls
       ++ "MatchDef:\n" ++ showMatchDef matchDef
       ++ "SubDef:\n" ++ showSubDef subDef
       ++ "\n"
@@ -56,7 +56,7 @@ readLetDef name def = do
   defAlreadyExists <- gets (letDecls >>> member name)
   when defAlreadyExists $ lift . throwE $ "Cannot redefine let declaration '" ++ name ++ "' because it already exists."
   let letDirectDependencies = getLetDirectDependencies def
-  let allDependenciesDefined decls = all (\dep -> dep `member` decls) letDirectDependencies
+  let allDependenciesDefined decls = all (`member` decls) letDirectDependencies
   allDepsDefined <- gets (letDecls >>> allDependenciesDefined)
   unless allDepsDefined $ lift . throwE $ "Some dependencies are not defined!"
   modify (\state -> state { letDecls = Map.insert name def (letDecls state) })
@@ -66,7 +66,7 @@ readMatch :: MatchDef () -> StateT ProgramAst (Except String) ()
 readMatch match = do
   matchDef <- gets matchDef
   unless (matchDef == return ()) $ lift . throwE $ "Cannot redefine match! It has already been defined."
-  modify (\state -> state { matchDef = match }) 
+  modify (\state -> state { matchDef = match })
 
 
 readSubstitute :: SubDef () -> StateT ProgramAst (Except String) ()
@@ -81,8 +81,8 @@ getLetDirectDependencies letDef = iterM writeLet letDef |> execWriter |> List.nu
   where
     writeLet :: LetDefF (Writer [String] a) -> Writer [String] a
     writeLet line = case line of
-      LetDefInvocation func next -> (tell $ getFuncInvocationDependencies func) >> next
-      LetDefCaptureInvocation _ subexpression next -> (tell $ getLetDirectDependencies subexpression) >> next
+      LetDefInvocation func next -> tell (getFuncInvocationDependencies func) >> next
+      LetDefCaptureInvocation _ subexpression next -> tell (getLetDirectDependencies subexpression) >> next
       LetDefLiteral _ next -> next
 
 

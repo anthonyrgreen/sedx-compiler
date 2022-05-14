@@ -1,4 +1,4 @@
-module EscapeMatch 
+module EscapeMatch
     ( escapeLinkedMatch
     -- , escapeMatchLinked
     -- , stateToLinked
@@ -36,9 +36,9 @@ escapeLinkedMatch linkedMatch = execWriter $ iterM processLine linkedMatch
     processLine (LinkedMatchBuiltInFunc func args next) = processBuiltInFunc func args >> next
 
 processBuiltInFunc :: BuiltInFunc -> LinkedMatch () -> Writer String ()
-processBuiltInFunc func args = 
+processBuiltInFunc func args =
   case func of
-    Star -> 
+    Star ->
       let argRep = escapeLinkedMatch args
       -- in if isSingleCharLiteralOrBracket args then tell argRep >> tell "*" else mkGroup1 argRep >> tell "*"
       in tell argRep >> tell "*"
@@ -47,11 +47,11 @@ processBuiltInFunc func args =
       -- in if isSingleCharLiteralOrBracket args then tell argRep >> tell "?" else mkGroup1 argRep >> tell "?"
       in tell argRep >> tell "\\?"
     AnyOf -> do
-      tell "[" 
+      tell "["
       expandAndEscapeArgBracket1 args
       tell "]"
     NoneOf -> do
-      tell "[^" 
+      tell "[^"
       expandAndEscapeArgBracket1 args
       tell "]"
 
@@ -74,12 +74,12 @@ escapeFunc state func = case func of
     mkGroup $ forM args expandAndEscapeArgNonBracket
     tell "?"
   BuiltInFuncInvocation AnyOf args -> do
-    tell "[" 
-    forM args expandAndEscapeArgBracket
+    tell "["
+    forM_ args expandAndEscapeArgBracket
     tell "]"
   BuiltInFuncInvocation NoneOf args -> do
-    tell "[^" 
-    forM args expandAndEscapeArgBracket
+    tell "[^"
+    forM_ args expandAndEscapeArgBracket
     tell "]"
   UserDefinedFuncInvocation func -> case Map.lookup func $ letDecls state of
     -- TODO: Clean this up
@@ -102,9 +102,9 @@ escapeFunc state func = case func of
 -- TODO: We're assuming '/' is the separator character
 escapeLiteralNonBracket :: String -> String
 escapeLiteralNonBracket = concatMap escapeLiteralNonBracket1
-  where 
+  where
     escapeLiteralNonBracket1 c
-      | elem c ".[\\*^$/" = '\\':[c]
+      | c `elem` ".[\\*^$/" = '\\':[c]
       | otherwise = [c]
 
 

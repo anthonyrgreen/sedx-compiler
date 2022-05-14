@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, TypeSynonymInstances, FlexibleInstances, RankNTypes #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveTraversable, FlexibleInstances, RankNTypes #-}
+
 
 module ProgramAst
     ( FuncInvocation(..)
@@ -180,13 +180,13 @@ data MatchDefF next = MatchLiteral String next
 type MatchDef a = Free MatchDefF a
 type MatchDefT m a = FreeT MatchDefF m a
 
-instance Eq1 MatchDefF where 
-  liftEq test (MatchLiteral string1 next1) (MatchLiteral string2 next2) = 
+instance Eq1 MatchDefF where
+  liftEq test (MatchLiteral string1 next1) (MatchLiteral string2 next2) =
     string1 == string2 && test next1 next2
-  liftEq test (MatchInvocation func1 next1) (MatchInvocation func2 next2) = 
+  liftEq test (MatchInvocation func1 next1) (MatchInvocation func2 next2) =
     func1 == func2 && test next1 next2
-  liftEq test (MatchCaptureInvocation name1 match1 next1) (MatchCaptureInvocation name2 match2 next2) = 
-    name1 == name2 && (eq1 match1 match2) && test next1 next2
+  liftEq test (MatchCaptureInvocation name1 match1 next1) (MatchCaptureInvocation name2 match2 next2) =
+    name1 == name2 && eq1 match1 match2 && test next1 next2
   liftEq _ _ _ = False
 
 
@@ -207,12 +207,12 @@ type SubDef a = Free SubDefF a
 type SubDefT m a = FreeT SubDefF m a
 
 
-instance Eq1 SubDefF where 
-  liftEq test (SubLiteral string1 next1) (SubLiteral string2 next2) = 
+instance Eq1 SubDefF where
+  liftEq test (SubLiteral string1 next1) (SubLiteral string2 next2) =
     string1 == string2 && test next1 next2
-  liftEq test (SubCaptureReference name1 next1) (SubCaptureReference name2 next2) = 
+  liftEq test (SubCaptureReference name1 next1) (SubCaptureReference name2 next2) =
     name1 == name2 && test next1 next2
-  liftEq test (SubScopedCaptureReference refPath1 next1) (SubScopedCaptureReference refPath2 next2) = 
+  liftEq test (SubScopedCaptureReference refPath1 next1) (SubScopedCaptureReference refPath2 next2) =
     refPath1 == refPath2 && test next1 next2
   liftEq _ _ _ = False
 

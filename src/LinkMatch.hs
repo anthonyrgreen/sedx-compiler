@@ -1,4 +1,4 @@
-module LinkMatch 
+module LinkMatch
     ( linkMatch
     ) where
 
@@ -35,7 +35,7 @@ linkMatch letDeclsByName = iterM processMatchDef
 linkFuncInvocation :: Map.Map String (LetDef ()) -> FuncInvocation -> LinkedMatchT (Except String) ()
 linkFuncInvocation letDeclsByName func = case func of
   UserDefinedFuncInvocation funcName -> do
-    letDecl <- Map.lookup funcName letDeclsByName 
+    letDecl <- Map.lookup funcName letDeclsByName
            |> hoistMaybeToExceptT ("During linking: could not find a definition for " ++ funcName)
            |> lift
     iterM (linkLet letDeclsByName) letDecl
@@ -43,9 +43,9 @@ linkFuncInvocation letDeclsByName func = case func of
     linkedArgs <- lift $ linkArgs letDeclsByName args
     let concattedLinkedArgs = concatMonad linkedArgs
     -- TODO: Potential bug: what if the argument is itself a named capture group?
-    let processedArgs = if isSingleCharLiteralOrBracket concattedLinkedArgs 
+    let processedArgs = if isSingleCharLiteralOrBracket concattedLinkedArgs
                         then concattedLinkedArgs
-                        else linkedMatchUnnamedCaptureGroup concattedLinkedArgs 
+                        else linkedMatchUnnamedCaptureGroup concattedLinkedArgs
     case func of
       AnyOf -> linkedMatchBuiltInFunc AnyOf concattedLinkedArgs
       NoneOf -> linkedMatchBuiltInFunc NoneOf concattedLinkedArgs
@@ -64,7 +64,7 @@ linkLet letDeclsByName letDefStatement = case letDefStatement of
 
 
 linkArgs :: Map.Map String (LetDef ()) -> [FuncArg] -> Except String [LinkedMatch ()]
-linkArgs letDeclsByName funcArgs = mapM linkArg funcArgs
+linkArgs letDeclsByName = mapM linkArg
   where
     linkArg :: FuncArg -> Except String (LinkedMatch ())
     linkArg (ArgLiteral string) = return $ linkedMatchLiteral string

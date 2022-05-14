@@ -33,7 +33,7 @@ hoistMaybeToExceptT err = maybeToExceptT err . hoistMaybe
 
 
 concatMonad :: Monad m => [m ()] -> m ()
-concatMonad = Prelude.foldl (\as a -> as >> a) (return ())
+concatMonad = Prelude.foldl (>>) (return ())
 
 applyExcept :: Traversable f => FreeT f (Except e) a -> (Free f a -> Free f a) -> FreeT f (Except e) a
 applyExcept arg func = case runExcept (joinFreeT arg) of
@@ -61,8 +61,8 @@ getCommands linkedMatch = execWriter $ iterM processLine linkedMatch
   where
     processLine :: LinkedMatchF (Writer [LinkedMatchF ()] ()) -> Writer [LinkedMatchF ()] ()
     -- processLine val = tell [val]
-    processLine (LinkedMatchLiteral str next) = tell [(LinkedMatchLiteral str ())] >> next
-    processLine (LinkedMatchUnnamedCaptureGroup linkedMatch next) = tell [(LinkedMatchUnnamedCaptureGroup linkedMatch ())] >> next
-    processLine (LinkedMatchNamedCaptureGroup name linkedMatch next) = tell [(LinkedMatchNamedCaptureGroup name linkedMatch ())] >> next
-    processLine (LinkedMatchBuiltInFunc func args next) = tell [(LinkedMatchBuiltInFunc func args ())] >> next
+    processLine (LinkedMatchLiteral str next) = tell [LinkedMatchLiteral str ()] >> next
+    processLine (LinkedMatchUnnamedCaptureGroup linkedMatch next) = tell [LinkedMatchUnnamedCaptureGroup linkedMatch ()] >> next
+    processLine (LinkedMatchNamedCaptureGroup name linkedMatch next) = tell [LinkedMatchNamedCaptureGroup name linkedMatch ()] >> next
+    processLine (LinkedMatchBuiltInFunc func args next) = tell [LinkedMatchBuiltInFunc func args ()] >> next
 

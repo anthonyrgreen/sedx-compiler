@@ -36,26 +36,26 @@ showProgram program = "Program\n" ++ go program
       Free (Substitute sub next) -> showSubDef sub ++ go next
 
 
-indent tabs str = take tabs (repeat '\t') ++ str
+indent tabs str = replicate tabs '\t' ++ str
 
 showLetDef :: LetDef a -> String
-showLetDef letDef = showLetDef1 0 letDef
+showLetDef = showLetDef1 0
 
 showLetDef1 :: Int -> LetDef a -> String
-showLetDef1 tabs letDef = take tabs (repeat '\t') ++ "Let\n" ++ go (tabs + 1) letDef
+showLetDef1 tabs letDef = replicate tabs '\t' ++ "Let\n" ++ go (tabs + 1) letDef
   where
     go tabs letDef = case runFree letDef of
       Pure _ -> ""
-      Free (LetDefLiteral x next) -> 
+      Free (LetDefLiteral x next) ->
         indent tabs "Lit: \"" ++ x ++ "\"\n" ++ go tabs next
-      Free (LetDefInvocation func next) -> 
+      Free (LetDefInvocation func next) ->
         indent tabs "Invoc: " ++ show func ++ "\n" ++ go tabs next
-      Free (LetDefCaptureInvocation name func next) -> 
+      Free (LetDefCaptureInvocation name func next) ->
         indent tabs "Capture name: " ++ name ++ ", Subexpression:\n" ++ showLetDef1 (tabs + 1) func ++ "\n" ++ go tabs next
 
 
 showMatchDef :: MatchDef a -> String
-showMatchDef matchDef = showMatchDef1 0 matchDef
+showMatchDef = showMatchDef1 0
 
 
 showMatchDef1 :: Int -> MatchDef a -> String
@@ -63,16 +63,16 @@ showMatchDef1 tabs matchDef = indent tabs "Match\n" ++ go (tabs + 1) matchDef
   where
     go tabs matchDef = case runFree matchDef of
       Pure _ -> ""
-      Free (MatchLiteral x next) -> 
+      Free (MatchLiteral x next) ->
         indent tabs "Lit: \"" ++ x ++ "\"\n" ++ go tabs next
-      Free (MatchInvocation func next) -> 
+      Free (MatchInvocation func next) ->
         indent tabs "Invoc: " ++ show func ++ "\n" ++ go tabs next
-      Free (MatchCaptureInvocation name func next) -> 
+      Free (MatchCaptureInvocation name func next) ->
         indent tabs "Capture name: " ++ name ++ ", Subexpression: " ++ showMatchDef1 (tabs + 1) func ++ "\n" ++ go tabs next
 
 
 showSubDef :: SubDef a -> String
-showSubDef subDef = showSubDef1 0 subDef
+showSubDef = showSubDef1 0
 
 
 showSubDef1 :: Int -> SubDef a -> String
@@ -80,12 +80,12 @@ showSubDef1 tabs subDef = indent tabs "Sub\n" ++ go (tabs + 1) subDef
   where
     go tabs subDef = case runFree subDef of
       Pure _ -> ""
-      Free (SubLiteral x next) -> 
+      Free (SubLiteral x next) ->
         indent tabs "Lit: \"" ++ x ++ "\"\n" ++ go tabs next
-      Free (SubCaptureReference ref next) -> 
+      Free (SubCaptureReference ref next) ->
         indent tabs "CaptureRef: " ++ ref ++ "\n" ++ go tabs next
-      Free (SubScopedCaptureReference path next) -> 
-        indent tabs "Scoped CaptureRef: " ++ (concat $ intersperse "." path) ++ "\n" ++ go tabs next
+      Free (SubScopedCaptureReference path next) ->
+        indent tabs "Scoped CaptureRef: " ++ intercalate "." path ++ "\n" ++ go tabs next
 
 
 showLinkedMatchDef :: LinkedMatch a -> String
@@ -94,27 +94,27 @@ showLinkedMatchDef linkedMatchDef = "LinkedMatch\n" ++ go 1 linkedMatchDef
     go :: Int -> LinkedMatch a -> String
     go tabs linkedMatchDef = case runFree linkedMatchDef of
       Pure _ -> ""
-      Free (LinkedMatchLiteral literal next) -> 
-        indent tabs "Lit: \"" ++ literal ++ "\"\n" 
+      Free (LinkedMatchLiteral literal next) ->
+        indent tabs "Lit: \"" ++ literal ++ "\"\n"
         ++ go tabs next
-      Free (LinkedMatchUnnamedCaptureGroup nestedDef next) -> 
+      Free (LinkedMatchUnnamedCaptureGroup nestedDef next) ->
         indent tabs "Unnamed capture group:\n"
-        ++ indent tabs "{\n" 
-        ++ go (tabs + 1) nestedDef 
-        ++ indent tabs "}\n" 
+        ++ indent tabs "{\n"
+        ++ go (tabs + 1) nestedDef
+        ++ indent tabs "}\n"
         ++ go tabs next
-      Free (LinkedMatchNamedCaptureGroup name nestedDef next) -> 
+      Free (LinkedMatchNamedCaptureGroup name nestedDef next) ->
         indent tabs "Named capture group: <" ++ name ++ ">\n"
-        ++ indent tabs "{\n" 
-        ++ go (tabs + 1) nestedDef 
-        ++ indent tabs "}\n" 
+        ++ indent tabs "{\n"
+        ++ go (tabs + 1) nestedDef
+        ++ indent tabs "}\n"
         ++ go tabs next
-      Free (LinkedMatchBuiltInFunc builtInFunc nestedDefs next) -> 
-        indent tabs "Built-in func:\n" 
+      Free (LinkedMatchBuiltInFunc builtInFunc nestedDefs next) ->
+        indent tabs "Built-in func:\n"
         ++ indent tabs "name: <" ++ show builtInFunc ++ ">\n"
-        ++ indent tabs "{\n" 
-        ++ go (tabs + 1) nestedDefs 
-        ++ indent tabs "}\n" 
+        ++ indent tabs "{\n"
+        ++ go (tabs + 1) nestedDefs
+        ++ indent tabs "}\n"
         ++ go tabs next
 
 deriveShow1 ''LetDefF

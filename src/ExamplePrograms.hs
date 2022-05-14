@@ -1,4 +1,4 @@
-module ExamplePrograms 
+module ExamplePrograms
     ( myProgram
     , single_import
     , many_imports

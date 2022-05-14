@@ -1,4 +1,4 @@
-module LinkSub 
+module LinkSub
   ( linkSub
   , listRefsInSub
   ) where
@@ -16,7 +16,7 @@ import Control.Monad.Writer.Lazy
 import Control.Monad.State.Lazy
 import Data.List
 import Data.Map.Strict as Map
-import Utils 
+import Utils
 
 
 linkSub :: ProgramAst -> LinkedMatch () -> LinkedSubT (Except String) ()
@@ -25,7 +25,7 @@ linkSub programAst linkedMatch = iterM processLine (subDef programAst)
     processLine :: SubDefF (LinkedSubT (Except String) ()) -> LinkedSubT (Except String) ()
     processLine (SubLiteral literal next) = linkedSubLiteral literal >> next
     processLine (SubCaptureReference refName next) = do
-      captureGroupNum <- lift $ getCaptureGroupNum linkedMatch [refName] 
+      captureGroupNum <- lift $ getCaptureGroupNum linkedMatch [refName]
       linkedSubBackReference captureGroupNum
       next
     processLine (SubScopedCaptureReference refNames next) = do
@@ -35,12 +35,12 @@ linkSub programAst linkedMatch = iterM processLine (subDef programAst)
 
 
 getCaptureGroupNumsByPath :: LinkedMatch () -> Map.Map [String] Int
-getCaptureGroupNumsByPath linkedMatch = 
-  linkedMatch 
+getCaptureGroupNumsByPath linkedMatch =
+  linkedMatch
     |> iterM (processLine [] True)
     |> flip runStateT 1
     |> execWriter
-    |> Map.fromList 
+    |> Map.fromList
     where
       processLine :: [String] -> Bool -> LinkedMatchF (StateT Int (Writer [([String], Int)]) a) -> StateT Int (Writer [([String], Int)]) a
       processLine currentPath recordCaptureGroups linkedMatch = case linkedMatch of
@@ -62,10 +62,10 @@ getCaptureGroupNumsByPath linkedMatch =
 
 getCaptureGroupNum :: LinkedMatch () -> [String] -> Except String Int
 getCaptureGroupNum linkedMatch path =
-  let err = "Could not find referenced capture " ++ concat (intersperse "." path) ++ " in match!"
-  in linkedMatch 
-    |> getCaptureGroupNumsByPath 
-    |> Map.lookup path 
+  let err = "Could not find referenced capture " ++ intercalate "." path ++ " in match!"
+  in linkedMatch
+    |> getCaptureGroupNumsByPath
+    |> Map.lookup path
     |> hoistMaybeToExceptT err
 
 
