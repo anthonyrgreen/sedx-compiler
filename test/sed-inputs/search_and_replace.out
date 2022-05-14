@@ -1,0 +1,1 @@
+import {ExtraImport, Module1, Module2} from 'root/move/to/some/new/directory/file';
