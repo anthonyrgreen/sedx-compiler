@@ -19,7 +19,7 @@ import           EscapeMatch
 import           Lib
 import           ProgramAst
 import           ReadProgramAst
-
+import Flags
 
 single_import :: LetDef ()
 single_import = do
@@ -81,6 +81,6 @@ myProgram = do
 
 
 myProgramCompiledState = readProgramAst myProgram
-myProgramMatch = escapeProgramMatch myProgram
-myProgramMatchOptimized = escapeOptimizedProgramMatch myProgram
+myProgramMatch = escapeProgramMatch GNU myProgram
+myProgramMatchOptimized = escapeOptimizedProgramMatch GNU myProgram
 

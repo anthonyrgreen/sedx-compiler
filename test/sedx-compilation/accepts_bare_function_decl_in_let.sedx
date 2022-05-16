@@ -1,0 +1,7 @@
+let
+  bare_builtin_func_decl := star('something')
+  bare_user_func_decl := bare_builtin_func_decl()
+match
+${bare_user_func_decl()}
+substitute
+unimportant

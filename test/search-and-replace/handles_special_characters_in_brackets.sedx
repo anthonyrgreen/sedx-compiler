@@ -1,0 +1,6 @@
+let
+  match_special_chars := '${anyof('.[\()*+?{|$^]')}'
+match
+${capture('first') as first}${star(match_special_chars())}${capture('second') as second}
+substitute
+${first}${second}

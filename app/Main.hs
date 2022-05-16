@@ -8,6 +8,8 @@ import           System.Environment
 import           System.IO
 import           System.IO.Error
 import           Text.Megaparsec
+import Flags 
+
 
 main :: IO ()
 main = do
@@ -18,5 +20,5 @@ main = do
   programStr <- withFile filename ReadMode hGetContents'
   let output = do
                 program <- parse pProgram filename programStr
-                return $ printMatchAndSub program
+                return $ printMatchAndSub BSDExtended program
   putStr $ repErrorOrSuccess output

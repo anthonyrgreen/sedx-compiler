@@ -104,8 +104,8 @@ linkedMatchUnnamedCaptureGroup :: Monad m => LinkedMatch () -> LinkedMatchT m ()
 linkedMatchUnnamedCaptureGroup match = liftToFreeTStack $ LinkedMatchUnnamedCaptureGroup match
 
 
-linkedMatchNamedCaptureGroup :: Monad m => String -> LinkedMatch () -> LinkedMatchT m ()
-linkedMatchNamedCaptureGroup name match = liftToFreeTStack $ LinkedMatchNamedCaptureGroup name match
+linkedMatchNamedCaptureGroup :: Monad m => [String] -> LinkedMatch () -> LinkedMatchT m ()
+linkedMatchNamedCaptureGroup path match = liftToFreeTStack $ LinkedMatchNamedCaptureGroup path match
 
 
 linkedMatchBuiltInFunc :: Monad m => BuiltInFunc -> LinkedMatch () -> LinkedMatchT m ()
@@ -194,11 +194,11 @@ instance Eq1 MatchDefF where
 
 data LinkedMatchF next = LinkedMatchLiteral String next
                        | LinkedMatchUnnamedCaptureGroup (LinkedMatch ()) next
-                       | LinkedMatchNamedCaptureGroup String (LinkedMatch ()) next
+                       | LinkedMatchNamedCaptureGroup [String] (LinkedMatch ()) next
                        | LinkedMatchBuiltInFunc BuiltInFunc (LinkedMatch ()) next
                        deriving (Functor, Foldable, Traversable)
 type LinkedMatch a = Free LinkedMatchF a
-type LinkedMatchT m a = FreeT LinkedMatchF m a
+type LinkedMatchT m = FreeT LinkedMatchF m
 
 
 data SubDefF next = SubLiteral String next

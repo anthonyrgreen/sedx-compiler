@@ -1,0 +1,7 @@
+let
+  foo := '${capture('unused') as unused}'
+  bar := '${foo()} something extra'
+match
+${capture(bar()) as used}
+substitute
+${used}

@@ -1,0 +1,4 @@
+match
+${capture('0') as zero, capture('1') as one, capture('2') as two, capture('3') as three, capture('4') as four, capture('5') as five, capture('6') as six, capture('7') as seven, capture('8') as eight, capture('9') as nine}
+substitute
+${zero} ${one} ${two} ${three} ${four} ${five} ${six} ${seven} ${eight} ${nine}

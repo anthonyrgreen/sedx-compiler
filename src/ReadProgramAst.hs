@@ -57,8 +57,11 @@ readLetDef name def = do
   when defAlreadyExists $ lift . throwE $ "Cannot redefine let declaration '" ++ name ++ "' because it already exists."
   let letDirectDependencies = getLetDirectDependencies def
   let allDependenciesDefined decls = all (`member` decls) letDirectDependencies
-  allDepsDefined <- gets (letDecls >>> allDependenciesDefined)
-  unless allDepsDefined $ lift . throwE $ "Some dependencies are not defined!"
+  let undefinedDependencies decls = List.filter (`notMember` decls) letDirectDependencies
+  undefinedDeps <- gets (letDecls >>> undefinedDependencies)
+  unless (List.null undefinedDeps) $ lift . throwE $ 
+    "When defining let expression " ++ name ++ ": the following dependencies are undefined:\n"
+    ++ intercalate "\n" undefinedDeps
   modify (\state -> state { letDecls = Map.insert name def (letDecls state) })
 
 

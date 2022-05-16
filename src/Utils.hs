@@ -22,6 +22,9 @@ infixl 1  |>
 (|>) x f = f x
 
 
+fromEither :: (e -> a) -> Either e a -> a
+fromEither f = either f id
+
 -- Available in transformers-0.6.0.0 but we're currently at 0.5.6.2
 -- | Convert a 'Maybe' computation to 'MaybeT'.
 hoistMaybe :: (Applicative m) => Maybe b -> MaybeT m b

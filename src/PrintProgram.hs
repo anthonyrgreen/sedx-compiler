@@ -103,8 +103,8 @@ showLinkedMatchDef linkedMatchDef = "LinkedMatch\n" ++ go 1 linkedMatchDef
         ++ go (tabs + 1) nestedDef
         ++ indent tabs "}\n"
         ++ go tabs next
-      Free (LinkedMatchNamedCaptureGroup name nestedDef next) ->
-        indent tabs "Named capture group: <" ++ name ++ ">\n"
+      Free (LinkedMatchNamedCaptureGroup path nestedDef next) ->
+        indent tabs "Named capture group: <" ++ intercalate "." path ++ ">\n"
         ++ indent tabs "{\n"
         ++ go (tabs + 1) nestedDef
         ++ indent tabs "}\n"

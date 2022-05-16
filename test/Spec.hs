@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings, LambdaCase #-}
 
 import           Data.ByteString.Lazy       (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BC
@@ -7,37 +8,99 @@ import           System.FilePath            (addExtension, dropExtension,
                                              replaceExtension, takeBaseName,
                                              takeDirectory, takeFileName, (</>))
 import           System.Process             (readProcess)
-import           Test.Tasty                 (TestTree, defaultMain, testGroup)
+import           Test.Tasty                 (TestTree, defaultMain, testGroup, defaultMainWithIngredients, defaultIngredients, includingOptions, askOption)
 import           Test.Tasty.Golden          (findByExtension,
                                              goldenVsStringDiff)
 import           Text.Megaparsec
 import           Text.Megaparsec.Error      (errorBundlePretty)
+-- import Flags.Applicative (boolFlag, FlagsParser, parseSystemFlagsOrDie)
+import System.IO (stderr, hPutStrLn)
+import Control.Monad (when)
+import Options.Applicative (switch, short, long, help, execParser, ParserInfo(ParserInfo))
+import Options.Applicative.Help.Pretty (text)
+import Options.Applicative.Help.Chunk (stringChunk)
+import Options.Applicative.Types (ArgPolicy(Intersperse))
+import Test.Tasty.Options
+import Data.Proxy
+import Type.Reflection
+import Data.Maybe (Maybe(Just))
+import Data.Function ((&))
+import Utils
+import Flags
+
+verboseFlag = switch $ short 'v' <> long "verbose" <> help "If true, print compiled sed command."
+
+newtype VerboseFlag = VerboseFlag Bool deriving Typeable
+verboseFlagDescription :: OptionDescription
+verboseFlagDescription = Option (Proxy :: Proxy VerboseFlag)
+
+instance IsOption VerboseFlag where
+  defaultValue = VerboseFlag False
+  parseValue str = VerboseFlag <$> safeReadBool str
+  optionName = "verbose"
+  optionHelp = "If true, print compiled sed command."
+  optionCLParser = flagCLParser (Just 'v') (VerboseFlag True)
+
+
+sedFlavors = [BSD, BSDExtended, GNU, GNUExtended]
+sedFlavorFileExt :: SedFlavor -> String
+sedFlavorFileExt = \case
+  BSD -> "bsd"
+  BSDExtended -> "bsdExt"
+  GNU -> "gnu"
+  GNUExtended -> "gnuExt"
 
 main :: IO ()
-main = defaultMain =<< sedReplacementTests
+main = do
+  searchAndReplaceSedxFiles <- findByExtension [".sedx"] "test/search-and-replace"
+  sedxCompilationFiles <- findByExtension [".sedx"] "test/sedx-compilation"
+  let ingredients = includingOptions [verboseFlagDescription] : defaultIngredients
+      testTree = sedReplacementTests searchAndReplaceSedxFiles sedxCompilationFiles & askOption
+  defaultMainWithIngredients ingredients testTree
 
 
-sedReplacementTests :: IO TestTree
-sedReplacementTests = do
-  srcs <- findByExtension [".sedx"] "test/sedx-inputs"
-  pure $ testGroup ".sedx golden tests" (aTest <$> srcs)
+sedReplacementTests :: [String] -> [String] -> VerboseFlag -> TestTree
+sedReplacementTests searchAndReplaceSedxFiles sedxCompilationFiles (VerboseFlag verbose) = do
+  testGroup "Sed tests" [searchAndReplaceTests, compilationTests]
   where
-    aTest sedxFile = goldenVsStringDiff
-                       testName -- test name
-                       diff
-                       sedOutputGolden -- golden file path
-                       (runSedxAndReplace sedxFile sedInput) -- action whose result is tested
-      where
-        testName = dropExtension $ takeFileName sedxFile
-        sedOutputGolden = "test/sed-outputs" </> addExtension testName "out"
-        sedInput = "test/sed-inputs" </> addExtension testName "in"
-        diff ref new = ["diff", "-u", ref, new]
+    searchAndReplaceParams = [(flavor, sedxFile) | flavor <- sedFlavors, sedxFile <- searchAndReplaceSedxFiles]
+    compilationParams = [(flavor, sedxFile) | flavor <- sedFlavors, sedxFile <- sedxCompilationFiles]
+    searchAndReplaceTests = testGroup "search and replace" (uncurry searchAndReplaceTest <$> searchAndReplaceParams)
+    compilationTests = testGroup "compilation" (uncurry sedxCompilationTest <$> compilationParams)
+    searchAndReplaceTest sedFlavor sedxFile = goldenVsStringDiff
+                                              (testName sedFlavor sedxFile)
+                                              diff
+                                              (sedSearchAndReplaceGolden sedxFile)
+                                              (runSedxAndReplace verbose sedFlavor sedxFile (sedInput sedxFile))
+    sedxCompilationTest sedFlavor sedxFile = goldenVsStringDiff
+                                             (testName sedFlavor sedxFile)
+                                             diff
+                                             (sedxCompilationGolden sedFlavor sedxFile)
+                                             (runSedxCompilationTest sedFlavor sedxFile)
+    testName sedFlavor = flip addExtension (sedFlavorFileExt sedFlavor) . dropExtension . takeFileName
+    diff ref new = ["diff", "-u", ref, new]
+    sedSearchAndReplaceGolden sedxFile = replaceExtension sedxFile "sedout.golden"
+    sedxCompilationGolden sedFlavor sedxFile = replaceExtension sedxFile "sedxout" |> flip addExtension (sedFlavorFileExt sedFlavor) |> flip addExtension "golden"
+    sedInput sedxFile = replaceExtension sedxFile "sedin"
 
 
-
-runSedxAndReplace :: String -> String -> IO BC.ByteString
-runSedxAndReplace sedxFile sedInput = do
+runSedxAndReplace :: Bool -> SedFlavor -> String -> String -> IO BC.ByteString
+runSedxAndReplace verbose sedFlavor sedxFile sedInput = do
   prog <- (parse pProgram sedxFile <$> readFile sedxFile) >>= either (fail . errorBundlePretty) pure
+  let matchAndSubStr = printMatchAndSub sedFlavor prog
+  when verbose $ hPutStrLn stderr matchAndSubStr
   input <- readFile sedInput
-  BC.pack <$> readProcess "gsed" ["-e", printMatchAndSub prog] input
+  let (sedCmd, extraArgs) = case sedFlavor of
+                              BSD -> ("sed", [])
+                              BSDExtended -> ("sed", ["-E"])
+                              GNU -> ("gsed", [])
+                              GNUExtended -> ("gsed", ["-E"])
+  BC.pack <$> readProcess sedCmd (extraArgs ++ [matchAndSubStr]) input
+  -- BC.pack <$> readProcess "sed" [matchAndSubStr] input
 
+
+runSedxCompilationTest :: SedFlavor -> String -> IO BC.ByteString
+runSedxCompilationTest sedFlavor sedxFile = do
+  out <- (parse pProgram sedxFile <$> readFile sedxFile) >>= 
+          \parseOut -> pure (either errorBundlePretty (printMatchAndSub sedFlavor) parseOut)
+  return $ BC.pack out

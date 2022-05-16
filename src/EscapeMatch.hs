@@ -24,28 +24,31 @@ import           OptimizeMatch
 import           ProgramAst
 import           ReadProgramAst
 import           Utils
+import Flags
 
-
-escapeLinkedMatch :: LinkedMatch () -> String
-escapeLinkedMatch linkedMatch = execWriter $ iterM processLine linkedMatch
+escapeLinkedMatch :: SedFlavor -> LinkedMatch () -> String
+escapeLinkedMatch sedFlavor linkedMatch = execWriter $ iterM processLine linkedMatch
   where
     processLine :: LinkedMatchF (Writer String a) -> Writer String a
-    processLine (LinkedMatchLiteral literal next) = tell (escapeLiteralNonBracket literal) >> next
-    processLine (LinkedMatchUnnamedCaptureGroup nestedDef next) = mkGroup (iterM processLine nestedDef) >> next
-    processLine (LinkedMatchNamedCaptureGroup name nestedDef next) = mkGroup (iterM processLine nestedDef) >> next
-    processLine (LinkedMatchBuiltInFunc func args next) = processBuiltInFunc func args >> next
+    processLine (LinkedMatchLiteral literal next) = tell (escapeLiteralNonBracket sedFlavor literal) >> next
+    processLine (LinkedMatchUnnamedCaptureGroup nestedDef next) = mkGroup sedFlavor (iterM processLine nestedDef) >> next
+    processLine (LinkedMatchNamedCaptureGroup name nestedDef next) = mkGroup sedFlavor (iterM processLine nestedDef) >> next
+    processLine (LinkedMatchBuiltInFunc func args next) = processBuiltInFunc sedFlavor func args >> next
 
-processBuiltInFunc :: BuiltInFunc -> LinkedMatch () -> Writer String ()
-processBuiltInFunc func args =
+processBuiltInFunc :: SedFlavor -> BuiltInFunc -> LinkedMatch () -> Writer String ()
+processBuiltInFunc sedFlavor func args =
   case func of
     Star ->
-      let argRep = escapeLinkedMatch args
-      -- in if isSingleCharLiteralOrBracket args then tell argRep >> tell "*" else mkGroup1 argRep >> tell "*"
+      let argRep = escapeLinkedMatch sedFlavor args
       in tell argRep >> tell "*"
     Maybe ->
-      let argRep = escapeLinkedMatch args
-      -- in if isSingleCharLiteralOrBracket args then tell argRep >> tell "?" else mkGroup1 argRep >> tell "?"
-      in tell argRep >> tell "\\?"
+      let argRep = escapeLinkedMatch sedFlavor args
+          opRep = case sedFlavor of
+            GNU -> "\\?"
+            GNUExtended -> "?"
+            BSD -> "\\{0,1\\}"
+            BSDExtended -> "?"
+      in tell argRep >> tell opRep
     AnyOf -> do
       tell "["
       expandAndEscapeArgBracket1 args
@@ -59,67 +62,40 @@ expandAndEscapeArgBracket1 :: LinkedMatch () -> Writer String ()
 expandAndEscapeArgBracket1 = iterM processLine
   where
     processLine :: LinkedMatchF (Writer String a) -> Writer String a
-    processLine (LinkedMatchLiteral str next) = tell str >> next
+    processLine (LinkedMatchLiteral str next) = tell (rearrangeStringForBracket str) >> next
     processLine (LinkedMatchUnnamedCaptureGroup linkedMatch next) = tell "CANNOT PUT A LinkedMatchUnnamedCaptureGroup IN A BRACKET" >> next
     processLine (LinkedMatchNamedCaptureGroup name linkedMatch next) = tell "CANNOT PUT A LinkedMatchNamedCaptureGroup IN A BRACKET" >> next
     processLine (LinkedMatchBuiltInFunc func args next) = tell "CANNOT PUT A LinkedMatchBuiltInFunc IN A BRACKET" >> next
 
-
-escapeFunc :: ProgramAst -> FuncInvocation -> Writer String ()
-escapeFunc state func = case func of
-  BuiltInFuncInvocation Star args -> do
-    mkGroup $ forM args expandAndEscapeArgNonBracket
-    tell "*"
-  BuiltInFuncInvocation Maybe args -> do
-    mkGroup $ forM args expandAndEscapeArgNonBracket
-    tell "?"
-  BuiltInFuncInvocation AnyOf args -> do
-    tell "["
-    forM_ args expandAndEscapeArgBracket
-    tell "]"
-  BuiltInFuncInvocation NoneOf args -> do
-    tell "[^"
-    forM_ args expandAndEscapeArgBracket
-    tell "]"
-  UserDefinedFuncInvocation func -> case Map.lookup func $ letDecls state of
-    -- TODO: Clean this up
-    Nothing -> tell "OOPS I GUESS I COULDN'T FIND THE LET DEF FOR " >> tell func
-    Just letDef -> iterM processLine letDef
-  where
-      processLine :: LetDefF (Writer String a) -> Writer String a
-      processLine (LetDefLiteral literal next) = tell (escapeLiteralNonBracket literal) >> next
-      processLine (LetDefInvocation funcInvocation next) = escapeFunc state funcInvocation >> next
-      processLine (LetDefCaptureInvocation _ def next) = mkGroup (iterM processLine def) >> next
-      expandAndEscapeArgNonBracket :: FuncArg -> Writer String ()
-      expandAndEscapeArgNonBracket (ArgLiteral literal) = tell $ escapeLiteralNonBracket literal
-      expandAndEscapeArgNonBracket (InvocationArg funcInvocation) = escapeFunc state funcInvocation
-      expandAndEscapeArgBracket :: FuncArg -> Writer String ()
-      -- TODO: actually deal with literal escaping in brackets
-      expandAndEscapeArgBracket (ArgLiteral literal) = tell literal
-      -- TODO: Should this actually be possible?
-      expandAndEscapeArgBracket (InvocationArg funcInvocation) = tell "THIS IS NOT SUPPORTED AT THIS TIME"
+rearrangeStringForBracket :: String -> String
+rearrangeStringForBracket str = if ']' `elem` str then ']' : Prelude.filter (/= ']') str else str
 
 -- TODO: We're assuming '/' is the separator character
-escapeLiteralNonBracket :: String -> String
-escapeLiteralNonBracket = concatMap escapeLiteralNonBracket1
+escapeLiteralNonBracket :: SedFlavor -> String -> String
+escapeLiteralNonBracket sedFlavor = concatMap escapeLiteralNonBracket1
   where
     escapeLiteralNonBracket1 c
-      | c `elem` ".[\\*^$/" = '\\':[c]
+      | c `elem` specialChars = '\\':[c]
       | otherwise = [c]
+    specialChars = case sedFlavor of
+      GNU -> ".[\\*^$/"
+      GNUExtended -> ".[\\*^$/?+(){}|"
+      BSD -> ".[\\*^$/"
+      BSDExtended -> ".[\\*^$/?+(){}|"
 
 
-mkGroup :: Writer String a -> Writer String a
-mkGroup writer = do
-    tell "\\("
+
+mkGroup :: SedFlavor -> Writer String a -> Writer String a
+mkGroup sedFlavor writer = do
+    let (openParens, closeParens) = case sedFlavor of
+            GNU -> ("\\(", "\\)")
+            GNUExtended -> ("(", ")")
+            BSD -> ("\\(", "\\)")
+            BSDExtended -> ("(", ")")
+    tell openParens
     ret <- writer
-    tell "\\)"
+    tell closeParens
     return ret
-
-mkGroup1 :: String -> Writer String ()
-mkGroup1 string = do
-    tell "\\("
-    tell string
-    tell "\\)"
 
 -- -- NOTE: does not handle collating symbols or equivalence classes
 -- charClassEscape :: String -> String

@@ -45,22 +45,23 @@ test_pLetDef = parseTest (pLetDecl $ mkPos 2)
 
 
 upToNextLine = (hspace *> eol) $> ()
-
+endOfProgram = (hspace *> many eol) $> ()
 
 pProgram :: Parser (Program ())
 pProgram = do
-  L.symbol upToNextLine "let"
-  letDecls <- try pLetDecls <|> return (return ())
+  -- L.symbol upToNextLine "let"
+  letDecls <- pLetDecls <|> return (return ())
   L.symbol upToNextLine "match"
   matchDef <- L.lexeme upToNextLine $ pMatchDef <&> ProgramAst.match
   L.symbol upToNextLine "substitute"
-  subDef <- L.lexeme upToNextLine $ pSubDef <&> ProgramAst.substitute
+  subDef <- L.lexeme endOfProgram $ pSubDef <&> ProgramAst.substitute
   return $ do
     letDecls
     matchDef
     subDef
 
 pLetDecls = do
+  try $ L.symbol upToNextLine "let"
   letIndent <- L.indentGuard space GT pos1
   many (pLetDecl letIndent) <&> sequence_
 
@@ -82,7 +83,7 @@ pLetName = label "pLetName" $ do
 
 
 pLetDef :: LetDefP
-pLetDef = label "pLetDef" $ try pLetString <|> pFunctionCapture <|> (letDefInvocation <$> pFunctionCall)
+pLetDef = label "pLetDef" $ pLetString <|> pFunctionCapture <|> (letDefInvocation <$> pFunctionCall)
 
 
 pLetString :: LetDefP
@@ -92,7 +93,7 @@ pLetString = label "pLetString" $ between openQuote closeQuote $ do
   where
     openQuote = char '\''
     closeQuote = L.lexeme hspace $ char '\''
-    pLetStringInteriorTerm = try pLetExpansion <|> try pLetStringLiteral -- nil?
+    pLetStringInteriorTerm = pLetExpansion <|> pLetStringLiteral -- nil?
 
 
 pLetExpansion :: LetDefP
@@ -101,7 +102,7 @@ pLetExpansion = label "pLetExpansion" $ sequence_ <$> pLetExpansionTerms
     openBrace = L.lexeme hspace $ string "${"
     closeBrace = string "}" -- TODO: we need a space-consuming version of this for non-quoted let expansions
     pLetSeparator = L.symbol hspace ","
-    pLetExpansionTerm = L.lexeme hspace $ pLetString <|> try pFunctionCapture <|> (letDefInvocation <$> pFunctionCall)
+    pLetExpansionTerm = L.lexeme hspace $ pLetString <|> pFunctionCapture <|> (letDefInvocation <$> pFunctionCall)
     pLetExpansionTerms = between openBrace closeBrace $ sepEndBy1 pLetExpansionTerm pLetSeparator
 
 

@@ -1,0 +1,12 @@
+let
+  digit := '${anyof('0-9')}'
+  inner := '${capture(digit()) as first, ' ', capture(digit()) as second}'
+  outer := '${capture(inner()) as first, ' ', capture(inner()) as second}'
+match
+${capture(outer()) as first, ' ', capture(outer()) as second}
+substitute
+${second.second.second} ${second.second.first} ${second.first.second} ${second.first.first} ${first.second.second} ${first.second.first} ${first.first.second} ${first.first.first}
+
+s/\(\(\([0-9]\) \([0-9]\)\) \(\([0-9]\) \([0-9]\)\)\) \(\(\([0-9]\) \([0-9]\)\) \(\([0-9]\) \([0-9]\)\)\)/\14 \13 \11 \10 \7 \6 \4 \3/g
+   1 2 3         4           5 6         7             8 9 0         1           2 3         4            
+   x x 3         4           x x         7             x x 0         1           x 3         4            

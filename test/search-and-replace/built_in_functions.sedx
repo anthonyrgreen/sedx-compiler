@@ -1,4 +1,3 @@
-let
 match
 ${capture(maybe('goodbye')) as maybe_goodbye} ${capture(star('hello')) as many_hello} ${maybe('non-existent ')}${capture(noneof('a-z')) as noneof_a_z} ${capture(anyof('a-z')) as anyof_a_z}
 substitute
