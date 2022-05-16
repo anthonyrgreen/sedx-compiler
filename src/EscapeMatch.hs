@@ -19,12 +19,12 @@ import           Data.Functor.Identity
 import           Data.Map.Strict            as Map
 import           Data.Maybe
 import           Data.Set                   as Set
+import           Flags
 import           LinkMatch
 import           OptimizeMatch
 import           ProgramAst
 import           ReadProgramAst
 import           Utils
-import Flags
 
 escapeLinkedMatch :: SedFlavor -> LinkedMatch () -> String
 escapeLinkedMatch sedFlavor linkedMatch = execWriter $ iterM processLine linkedMatch
@@ -44,9 +44,9 @@ processBuiltInFunc sedFlavor func args =
     Maybe ->
       let argRep = escapeLinkedMatch sedFlavor args
           opRep = case sedFlavor of
-            GNU -> "\\?"
+            GNU         -> "\\?"
             GNUExtended -> "?"
-            BSD -> "\\{0,1\\}"
+            BSD         -> "\\{0,1\\}"
             BSDExtended -> "?"
       in tell argRep >> tell opRep
     AnyOf -> do
@@ -78,9 +78,9 @@ escapeLiteralNonBracket sedFlavor = concatMap escapeLiteralNonBracket1
       | c `elem` specialChars = '\\':[c]
       | otherwise = [c]
     specialChars = case sedFlavor of
-      GNU -> ".[\\*^$/"
+      GNU         -> ".[\\*^$/"
       GNUExtended -> ".[\\*^$/?+(){}|"
-      BSD -> ".[\\*^$/"
+      BSD         -> ".[\\*^$/"
       BSDExtended -> ".[\\*^$/?+(){}|"
 
 
@@ -88,9 +88,9 @@ escapeLiteralNonBracket sedFlavor = concatMap escapeLiteralNonBracket1
 mkGroup :: SedFlavor -> Writer String a -> Writer String a
 mkGroup sedFlavor writer = do
     let (openParens, closeParens) = case sedFlavor of
-            GNU -> ("\\(", "\\)")
+            GNU         -> ("\\(", "\\)")
             GNUExtended -> ("(", ")")
-            BSD -> ("\\(", "\\)")
+            BSD         -> ("\\(", "\\)")
             BSDExtended -> ("(", ")")
     tell openParens
     ret <- writer

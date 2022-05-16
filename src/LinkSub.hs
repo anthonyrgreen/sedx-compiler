@@ -70,8 +70,8 @@ getCaptureGroupNum linkedMatch path =
     |> getCaptureGroupNumsByPath
     |> Map.lookup path
     |> hoistMaybeToExceptT err
-    >>= \num -> if num > 9 
-                then throwE ("Cannot reference capture group associated with path '" 
+    >>= \num -> if num > 9
+                then throwE ("Cannot reference capture group associated with path '"
                              ++ pathRep ++ "', because sed does not support capture "
                              ++ "groups over \\9, and its capture group would be \\" ++ show num)
                 else return num
@@ -81,6 +81,6 @@ listRefsInSub :: SubDef () -> Set.Set [String]
 listRefsInSub subDef = Set.fromList . execWriter $ iterM processLine subDef
   where
     processLine :: SubDefF (Writer [[String]] a) -> Writer [[String]] a
-    processLine (SubLiteral _ next) = next
-    processLine (SubCaptureReference ref next) = tell [[ref]] >> next
+    processLine (SubLiteral _ next)                   = next
+    processLine (SubCaptureReference ref next)        = tell [[ref]] >> next
     processLine (SubScopedCaptureReference refs next) = tell [refs] >> next

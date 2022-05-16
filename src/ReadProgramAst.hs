@@ -59,7 +59,7 @@ readLetDef name def = do
   let allDependenciesDefined decls = all (`member` decls) letDirectDependencies
   let undefinedDependencies decls = List.filter (`notMember` decls) letDirectDependencies
   undefinedDeps <- gets (letDecls >>> undefinedDependencies)
-  unless (List.null undefinedDeps) $ lift . throwE $ 
+  unless (List.null undefinedDeps) $ lift . throwE $
     "When defining let expression " ++ name ++ ": the following dependencies are undefined:\n"
     ++ intercalate "\n" undefinedDeps
   modify (\state -> state { letDecls = Map.insert name def (letDecls state) })

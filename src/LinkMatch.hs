@@ -12,6 +12,7 @@ import           Control.Monad.Trans
 import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Free
 import           Control.Monad.Trans.Maybe
+import           Control.Monad.Trans.Reader
 import           Control.Monad.Writer.Lazy
 import           Data.Functor.Identity
 import           Data.Map.Strict            as Map
@@ -19,7 +20,6 @@ import           Data.Maybe
 import           ProgramAst
 import           ReadProgramAst
 import           Utils
-import Control.Monad.Trans.Reader
 
 
 type ReaderStack = ReaderT Config (LinkedMatchT (Except String))
@@ -41,12 +41,12 @@ linkMatch1 = iterM processMatchDef
       MatchInvocation func next -> linkFuncInvocation func >> next
       MatchCaptureInvocation name nestedDef next -> do
         path <- asks getPath
-        let nestedPath = path ++ [name] 
+        let nestedPath = path ++ [name]
         local (\c -> c { getPath = nestedPath }) $ do
           linkedCaptureInvocation <- pullOutFree $ iterM processMatchDef nestedDef
           lift $ linkedMatchNamedCaptureGroup nestedPath linkedCaptureInvocation
           -- TODO: IS THIS RIGHT? Aren't we adding an extra capture invocation?
-          
+
         -- let linkedCaptureInvocation = local (\c -> c { getPath = path ++ [name] }) $ iterM processMatchDef nestedDef
         -- linkedCaptureInvocationSeq <- pullOutFree linkedCaptureInvocation
         -- local (\c -> c { getPath = path ++ [name] }) $ lift $ linkedMatchNamedCaptureGroup (path ++ [name]) linkedCaptureInvocationSeq
@@ -79,7 +79,7 @@ linkFuncInvocation func = case func of
 
 
 linkLet :: LetDefF (ReaderStack ()) -> ReaderStack ()
-linkLet = \case 
+linkLet = \case
   LetDefLiteral literal next -> lift (linkedMatchLiteral literal) >> next
   LetDefInvocation func next -> linkFuncInvocation func >> next
   LetDefCaptureInvocation name nestedDef next -> do
@@ -99,7 +99,7 @@ linkArgs :: [FuncArg] -> ReaderStack [LinkedMatch ()]
 linkArgs = mapM linkArg
   where
     linkArg :: FuncArg -> ReaderStack (LinkedMatch ())
-    linkArg (ArgLiteral string) = return $ linkedMatchLiteral string
+    linkArg (ArgLiteral string)  = return $ linkedMatchLiteral string
     linkArg (InvocationArg func) = pullOutFree $ linkFuncInvocation func
     pullOutFree :: (Monad m, Traversable f) => ReaderT Config (FreeT f m) a -> ReaderT Config (FreeT f m) (Free f a)
     pullOutFree x = ReaderT $ \c -> lift (joinFreeT (runReaderT x c))

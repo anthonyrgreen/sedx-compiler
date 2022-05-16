@@ -29,10 +29,10 @@ removeUnusedNamesFromNamedCaptureGroups namedPaths = iterM processLine
               then linkedMatchNamedCaptureGroup path nestedDefProcessed
               else linkedMatchUnnamedCaptureGroup nestedDefProcessed
         in lineProcessed >> next
-      LinkedMatchUnnamedCaptureGroup nestedDef next -> 
+      LinkedMatchUnnamedCaptureGroup nestedDef next ->
         let nestedDefProcessed = iterM processLine nestedDef
         in linkedMatchUnnamedCaptureGroup nestedDefProcessed >> next
-      LinkedMatchBuiltInFunc func nestedDefs next -> 
+      LinkedMatchBuiltInFunc func nestedDefs next ->
         let nestedDefsProcessed = iterM processLine nestedDefs
         in linkedMatchBuiltInFunc func nestedDefsProcessed >> next
       LinkedMatchLiteral literal next -> linkedMatchLiteral literal >> next
@@ -59,4 +59,4 @@ removeUnneededUnnamedCaptureGroups = iterM processLine
             Maybe -> (if removeNestedUnnamedCaptureGroups then builtInFuncProcessed else builtInFuncUnprocessed) >> next
             AnyOf -> builtInFuncProcessed >> next
             NoneOf -> builtInFuncProcessed >> next
-  
+

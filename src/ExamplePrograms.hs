@@ -16,10 +16,10 @@ import           Control.Monad.Trans.Free
 import           Data.Map.Strict          as Map
 import           Data.Maybe
 import           EscapeMatch
+import           Flags
 import           Lib
 import           ProgramAst
 import           ReadProgramAst
-import Flags
 
 single_import :: LetDef ()
 single_import = do

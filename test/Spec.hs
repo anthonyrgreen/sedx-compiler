@@ -1,32 +1,40 @@
-{-# LANGUAGE OverloadedStrings, LambdaCase #-}
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-import           Data.ByteString.Lazy       (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as BC
+import           Data.ByteString.Lazy            (ByteString)
+import qualified Data.ByteString.Lazy.Char8      as BC
 import           Lib
 import           ParseProgram
-import           System.FilePath            (addExtension, dropExtension,
-                                             replaceExtension, takeBaseName,
-                                             takeDirectory, takeFileName, (</>))
-import           System.Process             (readProcess)
-import           Test.Tasty                 (TestTree, defaultMain, testGroup, defaultMainWithIngredients, defaultIngredients, includingOptions, askOption)
-import           Test.Tasty.Golden          (findByExtension,
-                                             goldenVsStringDiff)
+import           System.FilePath                 (addExtension, dropExtension,
+                                                  replaceExtension,
+                                                  takeBaseName, takeDirectory,
+                                                  takeFileName, (</>))
+import           System.Process                  (readProcess)
+import           Test.Tasty                      (TestTree, askOption,
+                                                  defaultIngredients,
+                                                  defaultMain,
+                                                  defaultMainWithIngredients,
+                                                  includingOptions, testGroup)
+import           Test.Tasty.Golden               (findByExtension,
+                                                  goldenVsStringDiff)
 import           Text.Megaparsec
-import           Text.Megaparsec.Error      (errorBundlePretty)
+import           Text.Megaparsec.Error           (errorBundlePretty)
 -- import Flags.Applicative (boolFlag, FlagsParser, parseSystemFlagsOrDie)
-import System.IO (stderr, hPutStrLn)
-import Control.Monad (when)
-import Options.Applicative (switch, short, long, help, execParser, ParserInfo(ParserInfo))
-import Options.Applicative.Help.Pretty (text)
-import Options.Applicative.Help.Chunk (stringChunk)
-import Options.Applicative.Types (ArgPolicy(Intersperse))
-import Test.Tasty.Options
-import Data.Proxy
-import Type.Reflection
-import Data.Maybe (Maybe(Just))
-import Data.Function ((&))
-import Utils
-import Flags
+import           Control.Monad                   (when)
+import           Data.Function                   ((&))
+import           Data.Maybe                      (Maybe (Just))
+import           Data.Proxy
+import           Flags
+import           Options.Applicative             (ParserInfo (ParserInfo),
+                                                  execParser, help, long, short,
+                                                  switch)
+import           Options.Applicative.Help.Chunk  (stringChunk)
+import           Options.Applicative.Help.Pretty (text)
+import           Options.Applicative.Types       (ArgPolicy (Intersperse))
+import           System.IO                       (hPutStrLn, stderr)
+import           Test.Tasty.Options
+import           Type.Reflection
+import           Utils
 
 verboseFlag = switch $ short 'v' <> long "verbose" <> help "If true, print compiled sed command."
 
@@ -45,9 +53,9 @@ instance IsOption VerboseFlag where
 sedFlavors = [BSD, BSDExtended, GNU, GNUExtended]
 sedFlavorFileExt :: SedFlavor -> String
 sedFlavorFileExt = \case
-  BSD -> "bsd"
+  BSD         -> "bsd"
   BSDExtended -> "bsdExt"
-  GNU -> "gnu"
+  GNU         -> "gnu"
   GNUExtended -> "gnuExt"
 
 main :: IO ()
@@ -91,9 +99,9 @@ runSedxAndReplace verbose sedFlavor sedxFile sedInput = do
   when verbose $ hPutStrLn stderr matchAndSubStr
   input <- readFile sedInput
   let (sedCmd, extraArgs) = case sedFlavor of
-                              BSD -> ("sed", [])
+                              BSD         -> ("sed", [])
                               BSDExtended -> ("sed", ["-E"])
-                              GNU -> ("gsed", [])
+                              GNU         -> ("gsed", [])
                               GNUExtended -> ("gsed", ["-E"])
   BC.pack <$> readProcess sedCmd (extraArgs ++ [matchAndSubStr]) input
   -- BC.pack <$> readProcess "sed" [matchAndSubStr] input
@@ -101,6 +109,6 @@ runSedxAndReplace verbose sedFlavor sedxFile sedInput = do
 
 runSedxCompilationTest :: SedFlavor -> String -> IO BC.ByteString
 runSedxCompilationTest sedFlavor sedxFile = do
-  out <- (parse pProgram sedxFile <$> readFile sedxFile) >>= 
+  out <- (parse pProgram sedxFile <$> readFile sedxFile) >>=
           \parseOut -> pure (either errorBundlePretty (printMatchAndSub sedFlavor) parseOut)
   return $ BC.pack out

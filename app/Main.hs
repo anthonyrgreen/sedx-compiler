@@ -2,13 +2,13 @@ module Main where
 
 import           Control.Monad
 import           ExamplePrograms
+import           Flags
 import           Lib
 import           ParseProgram
 import           System.Environment
 import           System.IO
 import           System.IO.Error
 import           Text.Megaparsec
-import Flags 
 
 
 main :: IO ()

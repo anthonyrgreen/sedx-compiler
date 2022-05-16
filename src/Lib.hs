@@ -10,13 +10,13 @@ module Lib where
 import           Data.Set       as Set
 import           EscapeMatch
 import           EscapeSub
+import           Flags
 import           LinkMatch
 import           LinkSub
 import           OptimizeMatch
 import           ProgramAst
 import           ReadProgramAst
 import           Utils
-import Flags
 
 linkAndEscape :: SedFlavor -> ProgramAst -> String
 linkAndEscape sedFlavor state =
