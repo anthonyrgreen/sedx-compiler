@@ -5,9 +5,9 @@ Regexes should be easy to write, easy to read, and easy to run. Regrettably, onl
 An example program:
 
     let
-      single_import := '${star(anyof('A-Za-z0-9')), maybe(', ')}'
+      single_import := '${star(anyOf('A-Za-z0-9')), maybe(', ')}'
       many_imports := '${star(single_import())}'
-      filename := '${star(noneof('/ '))}'
+      filename := '${star(noneOf('/ '))}'
       whole_path := '${capture(filename()) as root, '/', star(filename(), '/'), capture(filename()) as filename}'
     match
     import {${capture(many_imports()) as imports}} from '${capture(whole_path()) as whole_path}';
@@ -49,4 +49,5 @@ Some other expressions you will be able to use (soon!)
 - [x] Moves [ to the front of a character class when it is not a part of a collating symbol
 - [ ] User-defined functions can accept arguments?
 - [x] Add `plus()`, `any()`, `start()`, `atLeast()`, `atMost()`, and `end()`
+- [x] Support BSD & GNU regexes, both ERE and BRE-style
 - [ ] Add `exactly()`
