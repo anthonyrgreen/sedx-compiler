@@ -1,0 +1,8 @@
+let
+  myAtMost := atMost('3', 'hey', maybe(' '))
+  myAtLeast := atLeast('1', 'goodbye')
+  myBetween := between('1', '4', 'na')
+match
+${capture(myAtLeast()) as myAtLeast} ${capture(myAtMost()) as myAtMost} ${capture(myBetween()) as myBetween}
+substitute
+${myBetween} ${myAtMost} ${myAtLeast}

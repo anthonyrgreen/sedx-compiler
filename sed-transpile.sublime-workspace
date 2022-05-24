@@ -1,0 +1,564 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"parseL",
+				"parseLetExpansion"
+			],
+			[
+				"LetDef",
+				"LetDefCaptureInvocation"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"Install Package Control",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: insta",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 485.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/anthonygreen/Documents/programming/sed-transpile",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/app",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/sample_programs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation"
+	],
+	"file_history":
+	[
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/ProgramAst.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/OptimizeMatch.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/EscapeMatch.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/ParseProgram.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/search_and_replace.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/handles_special_characters_in_brackets.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/nested_captures.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/built_in_functions.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/plus.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/startLine.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/startLine.sedin",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/startLine.sedout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/handles_special_characters_in_brackets.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/Utils.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/between.sedin",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/between.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/ExamplePrograms.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/between.sedout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/LinkSub.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/LinkMatch.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/PrintProgram.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/ReadProgramAst.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/BuiltInFunctions.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/built_in_functions.sedin",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/built_in_functions.sedout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/plus.sedin",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/plus.sedout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/Lib.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/stack.yaml",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/package.yaml",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/app/Main.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/.gitignore",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/Flags.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/Spec.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/accepts_program_without_newline_at_end.sedxout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/accepts_program_with_newline_at_end.sedxout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/accepts_program_with_newline_at_end.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/accepts_program_without_newline_at_end.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/handles_special_characters_in_brackets.sedout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/accepts_bare_function_decl_in_let.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/handles_special_characters_in_brackets.sedxout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/removes_unused_capture_groups.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/removes_unused_capture_groups.sedxout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/warns_on_more_than_ten_capture_groups.sedxout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-compilation/accepts_match_only_inputs.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace-errors/warns_on_more_than_ten_capture_groups.sedx.err",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/warns_on_more_than_ten_capture_groups.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/search_and_replace.sedx1",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/sed-transpile.cabal",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/.stack-work/dist/x86_64-osx/Cabal-3.4.1.0/build/sed-transpile-exe/sed-transpile-exe",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sed-outputs/built_in_functions.sedout",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sed-inputs/built_in_functions.sedin",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/nested_captures.sedout.golden",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/search-and-replace/nested_captures.sedin",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-inputs/search_and_replace.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/sedx-inputs/built_in_functions.sedx",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/README.md",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/test/test.sh",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/sample_programs/search_and_replace.txt",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/doc/bnf.txt",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/EscapeSub.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/OptimizeLinkedMatch.hs",
+		"/Users/anthonygreen/Documents/programming/sed-transpile/src/InterpretAst.hs",
+		"/Users/anthonygreen/Documents/programming/triads/README.txt",
+		"/Users/anthonygreen/Documents/programming/triads/src/Types.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Main.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Chord.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/SelectChordVoicings.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Utils.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/AbsoluteTone.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/RelativeTone.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/DebugPanel.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Unwrapper.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Fretboard.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Config.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Tunings.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Model.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/StringFret.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Notes.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/Note.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/WholeNote.elm",
+		"/Users/anthonygreen/Documents/programming/triads/src/NoteModifier.elm",
+		"/Users/anthonygreen/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/anthonygreen/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/anthonygreen/Documents/programming/triads/elm-stuff/0.19.1/lock"
+	],
+	"find":
+	{
+		"height": 40.0
+	},
+	"find_in_files":
+	{
+		"height": 128.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"&",
+			"linkedMatchBuiltInFunc0Arg",
+			"linkedMatchBuiltInFunc1Arg",
+			"BuiltInFunc ",
+			"BuiltInFunc",
+			"LinkedMatchBuiltIn",
+			"LinkedMatchBuiltInFunc0Arg",
+			"builtinfunc",
+			"BuiltInFunc",
+			"builtinfunc",
+			"linkAstMatch",
+			"except",
+			"hypoConvertFreeTOverIdToExcept",
+			"linkMatch",
+			"mkGroup",
+			"escapeLiteralNonBracket",
+			"escapeLinkedMatch",
+			"linkAstMatch",
+			"linkedmatchliteral",
+			"escapeLiteralNonBracket",
+			"escapeLinkedMatch",
+			" n ",
+			"either",
+			"linkFuncInvocation",
+			"concatMonad",
+			"linkArgs",
+			"linkedMatchBuiltInFunc",
+			"doesnotnee",
+			"isSingleCharLiteralOrBracket",
+			"linkedMatchNamedCaptureGroup",
+			"iterm",
+			"linkedMatchBuiltInFunc",
+			"progDesc",
+			"func ::",
+			"linkedMatch",
+			"next"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"scrollbar_highlights": true,
+		"show_context": true,
+		"use_buffer2": true,
+		"use_gitignore": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 28.0
+	},
+	"input":
+	{
+		"height": 48.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.elm_format":
+	{
+		"height": 55.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.sublime_haskell_output_panel":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "sed-transpile.sublime-project",
+	"replace":
+	{
+		"height": 52.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"parse",
+				"src/ParseProgram.hs"
+			],
+			[
+				"escap",
+				"src/EscapeMatch.hs"
+			],
+			[
+				"optim",
+				"src/OptimizeMatch.hs"
+			],
+			[
+				"par",
+				"src/ParseProgram.hs"
+			],
+			[
+				"ex",
+				"src/ExamplePrograms.hs"
+			],
+			[
+				"escape",
+				"src/EscapeMatch.hs"
+			],
+			[
+				"util",
+				"src/Utils.hs"
+			],
+			[
+				"linkma",
+				"src/LinkMatch.hs"
+			],
+			[
+				"prog",
+				"src/ProgramAst.hs"
+			],
+			[
+				"linkm",
+				"src/LinkMatch.hs"
+			],
+			[
+				"linksu",
+				"src/LinkSub.hs"
+			],
+			[
+				"readp",
+				"src/ReadProgramAst.hs"
+			],
+			[
+				"readpro",
+				"src/ReadProgramAst.hs"
+			],
+			[
+				"opti",
+				"src/OptimizeMatch.hs"
+			],
+			[
+				"prin",
+				"src/PrintProgram.hs"
+			],
+			[
+				"ut",
+				"src/Utils.hs"
+			],
+			[
+				"buil",
+				"src/BuiltInFunctions.hs"
+			],
+			[
+				"link",
+				"src/LinkMatch.hs"
+			],
+			[
+				"pro",
+				"src/ProgramAst.hs"
+			],
+			[
+				"optimi",
+				"src/OptimizeMatch.hs"
+			],
+			[
+				"parser",
+				"src/ParseProgram.hs"
+			],
+			[
+				"sub",
+				"src/LinkSub.hs"
+			],
+			[
+				"lib",
+				"src/Lib.hs"
+			],
+			[
+				"uti",
+				"src/Utils.hs"
+			],
+			[
+				"progra",
+				"src/ProgramAst.hs"
+			],
+			[
+				"opit",
+				"src/OptimizeMatch.hs"
+			],
+			[
+				"linksub",
+				"src/LinkSub.hs"
+			],
+			[
+				"printp",
+				"src/PrintProgram.hs"
+			],
+			[
+				"esca",
+				"src/EscapeMatch.hs"
+			],
+			[
+				"flag",
+				"src/Flags.hs"
+			],
+			[
+				"spe",
+				"test/Spec.hs"
+			],
+			[
+				"main",
+				"app/Main.hs"
+			],
+			[
+				"spec",
+				"test/Spec.hs"
+			],
+			[
+				"exa",
+				"src/ExamplePrograms.hs"
+			],
+			[
+				"print",
+				"src/PrintProgram.hs"
+			],
+			[
+				"opt",
+				"src/OptimizeMatch.hs"
+			],
+			[
+				"utils",
+				"src/Utils.hs"
+			],
+			[
+				"read",
+				"README.md"
+			],
+			[
+				"y",
+				"package.yaml"
+			],
+			[
+				"readas",
+				"src/ReadProgramAst.hs"
+			],
+			[
+				"li",
+				"src/Lib.hs"
+			],
+			[
+				"sear",
+				"sample_programs/search_and_replace.txt"
+			],
+			[
+				"sed",
+				"sed-transpile.cabal"
+			],
+			[
+				"pack",
+				"package.yaml"
+			],
+			[
+				"program",
+				"src/ProgramAst.hs"
+			],
+			[
+				"rea",
+				"src/ReadProgramAst.hs"
+			],
+			[
+				"bn",
+				"doc/bnf.txt"
+			],
+			[
+				"re",
+				"README.md"
+			],
+			[
+				"R",
+				"README.md"
+			],
+			[
+				"exam",
+				"src/ExamplePrograms.hs"
+			],
+			[
+				"u",
+				"src/Utils.hs"
+			],
+			[
+				"linkS",
+				"src/LinkSub.hs"
+			],
+			[
+				"esc",
+				"src/EscapeMatch.hs"
+			],
+			[
+				"tr",
+				"sed-transpile.cabal"
+			],
+			[
+				"RE",
+				"README.md"
+			],
+			[
+				".hs",
+				"src/EscapeMatch.hs"
+			],
+			[
+				"in",
+				"src/InterpretAst.hs"
+			],
+			[
+				"sta",
+				"stack.yaml"
+			],
+			[
+				"",
+				"sed-transpile.cabal"
+			],
+			[
+				"inte",
+				"src/InterpretAst.hs"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 305.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 592.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 419.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

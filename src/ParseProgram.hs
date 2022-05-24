@@ -19,9 +19,11 @@ import           PrintProgram
 import           ProgramAst
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
+import           Text.Megaparsec.Error
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Megaparsec.Debug
 import           Text.Megaparsec.Pos
+import Data.Set as S
 
 type Parser = Parsec Void String
 type LetDefP = Parser (LetDef ())
@@ -89,7 +91,7 @@ pLetDef = label "pLetDef" $ pLetString <|> pFunctionCapture <|> (letDefInvocatio
 pLetString :: LetDefP
 pLetString = label "pLetString" $ between openQuote closeQuote $ do
   letStringTerms <- many pLetStringInteriorTerm
-  return $ if null letStringTerms then letDefLiteral "" else sequence_ letStringTerms
+  return $ if Prelude.null letStringTerms then letDefLiteral "" else sequence_ letStringTerms
   where
     openQuote = char '\''
     closeQuote = L.lexeme hspace $ char '\''
@@ -122,18 +124,29 @@ pFunctionCall :: Parser FuncInvocation
 pFunctionCall = label "pFunctionCall" $ do
   funcName <- pLetName
   funcArgs <- pFuncArgs
-  return $ case funcName of
-    "star"     -> BuiltInFuncInvocation Star funcArgs
-    "anyof"    -> BuiltInFuncInvocation AnyOf funcArgs
-    "noneof"   -> BuiltInFuncInvocation NoneOf funcArgs
-    "maybe"    -> BuiltInFuncInvocation Maybe funcArgs
-    customName -> UserDefinedFuncInvocation funcName
+  case funcName of
+    "any"       -> check0Arg "any" funcArgs $ BuiltInFuncInvocation0Arg Any
+    "startLine" -> check0Arg "startLine" funcArgs $ BuiltInFuncInvocation0Arg StartLine
+    "endLine"   -> check0Arg "endLine" funcArgs $ BuiltInFuncInvocation0Arg EndLine
+    "star"      -> check1Arg "star" funcArgs $ BuiltInFuncInvocation1Arg Star funcArgs
+    "plus"      -> check1Arg "plus" funcArgs $ BuiltInFuncInvocation1Arg Plus funcArgs
+    "anyOf"     -> check1Arg "anyof" funcArgs $ BuiltInFuncInvocation1Arg AnyOf funcArgs
+    "noneOf"    -> check1Arg "noneof" funcArgs $ BuiltInFuncInvocation1Arg NoneOf funcArgs
+    "maybe"     -> check1Arg "maybe" funcArgs $ BuiltInFuncInvocation1Arg Maybe funcArgs
+    "atMost"    -> check2Arg "atMost" funcArgs $ BuiltInFuncInvocation2Arg AtMost (head funcArgs) (tail funcArgs)
+    "atLeast"   -> check2Arg "atLeast" funcArgs $ BuiltInFuncInvocation2Arg AtLeast (head funcArgs) (tail funcArgs)
+    "between"   -> check2Arg "between" funcArgs $ BuiltInFuncInvocation3Arg Between (funcArgs !! 0) (funcArgs !! 1) (Prelude.drop 2 funcArgs)
+    customName  -> check0Arg customName funcArgs $ UserDefinedFuncInvocation funcName
   where
     argOpen = L.symbol hspace "("
     argClose = L.symbol hspace ")"
     argSep = L.symbol hspace ","
     pFuncArgs = L.lexeme hspace $ between argOpen argClose (sepEndBy functionArg argSep)
     functionArg = (ArgLiteral <$> try pStrictString) <|> (InvocationArg <$> try pFunctionCall)
+    check0Arg argName args next = unless (Prelude.null args) (fancyFailure $ S.singleton $ ErrorFail $ argName ++ " cannot accept arguments!") >> return next
+    check1Arg argName args next = when (Prelude.null args) (fancyFailure $ S.singleton $ ErrorFail $ argName ++ " requires at least 1 argument") >> return next
+    check2Arg argName args next = when (length args < 2) (fancyFailure $ S.singleton $ ErrorFail $ argName ++ " requires at least 2 arguments") >> return next
+    check3Arg argName args next = when (length args < 3) (fancyFailure $ S.singleton $ ErrorFail $ argName ++ " requires at least 2 arguments") >> return next
 
 
 pStrictString :: Parser String

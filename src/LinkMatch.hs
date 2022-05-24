@@ -1,7 +1,8 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, BlockArguments #-}
 
 module LinkMatch
     ( linkMatch
+    , linkMatch0
     ) where
 
 
@@ -13,7 +14,7 @@ import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.Free
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
-import           Control.Monad.Writer.Lazy
+-- import           Control.Monad.Writer.Lazy ()
 import           Data.Functor.Identity
 import           Data.Map.Strict            as Map
 import           Data.Maybe
@@ -26,13 +27,52 @@ type ReaderStack = ReaderT Config (LinkedMatchT (Except String))
 data Config = Config { getLetDeclsByName :: Map.Map String (LetDef ()), getPath :: [String] }
 
 
+sequenceLinkedMatchTErrors :: LinkedMatchT (Except String) () -> Except String (LinkedMatch ())
+sequenceLinkedMatchTErrors = joinFreeT . sequenceNestedExcepts
+  where
+    sequenceNestedExcepts :: LinkedMatchT (Except String) a -> FreeT (LinkedMatchF Identity) (Except String) a
+    sequenceNestedExcepts = iterTM \case
+      LinkedMatchNamedCaptureGroup path nestedDef next -> do
+        pNestedDef <- lift $ sequenceLinkedMatchTErrors nestedDef
+        hoistFreeT generalize $ linkedMatchNamedCaptureGroup path pNestedDef
+        next
+      LinkedMatchUnnamedCaptureGroup nestedDef next -> do
+        pNestedDef <- lift $ sequenceLinkedMatchTErrors nestedDef
+        hoistFreeT generalize $ linkedMatchUnnamedCaptureGroup pNestedDef
+        next
+      LinkedMatchBuiltInFunc0Arg func next -> do
+        hoistFreeT generalize $ linkedMatchBuiltInFunc0Arg func
+        next
+      LinkedMatchBuiltInFunc1Arg func arg0 next -> do
+        sequencedArg0 <- lift $ sequenceLinkedMatchTErrors arg0
+        hoistFreeT generalize $ linkedMatchBuiltInFunc1Arg func sequencedArg0
+        next
+      LinkedMatchBuiltInFunc2Arg func arg0 arg1 next -> do
+        sequencedArg0 <- lift $ sequenceLinkedMatchTErrors arg0
+        sequencedArg1 <- lift $ sequenceLinkedMatchTErrors arg1
+        hoistFreeT generalize $ linkedMatchBuiltInFunc2Arg func sequencedArg0 sequencedArg1
+        next
+      LinkedMatchBuiltInFunc3Arg func arg0 arg1 arg2 next -> do
+        sequencedArg0 <- lift $ sequenceLinkedMatchTErrors arg0
+        sequencedArg1 <- lift $ sequenceLinkedMatchTErrors arg1
+        sequencedArg2 <- lift $ sequenceLinkedMatchTErrors arg2
+        hoistFreeT generalize $ linkedMatchBuiltInFunc3Arg func sequencedArg0 sequencedArg1 sequencedArg2
+        next
+      LinkedMatchLiteral literal next -> do
+        hoistFreeT generalize $ linkedMatchLiteral literal
+        next
+
+
+linkMatch0 :: Map.Map String (LetDef ()) -> MatchDef () -> Either String (LinkedMatch ())
+linkMatch0 letDeclsByName matchDef = runExcept . sequenceLinkedMatchTErrors $ linkMatch letDeclsByName matchDef
+
 linkMatch :: Map.Map String (LetDef ()) -> MatchDef () -> LinkedMatchT (Except String) ()
 linkMatch letDeclsByName matchDef = runReaderT (linkMatch1 matchDef) config
   where
     config = Config letDeclsByName []
 
 
-linkMatch1 :: MatchDef () -> ReaderT Config (LinkedMatchT (Except String)) ()
+linkMatch1 :: MatchDef () -> ReaderStack ()
 linkMatch1 = iterM processMatchDef
   where
     processMatchDef :: MatchDefF (ReaderStack ()) -> ReaderStack ()
@@ -45,14 +85,10 @@ linkMatch1 = iterM processMatchDef
         local (\c -> c { getPath = nestedPath }) $ do
           linkedCaptureInvocation <- pullOutFree $ iterM processMatchDef nestedDef
           lift $ linkedMatchNamedCaptureGroup nestedPath linkedCaptureInvocation
-          -- TODO: IS THIS RIGHT? Aren't we adding an extra capture invocation?
-
-        -- let linkedCaptureInvocation = local (\c -> c { getPath = path ++ [name] }) $ iterM processMatchDef nestedDef
-        -- linkedCaptureInvocationSeq <- pullOutFree linkedCaptureInvocation
-        -- local (\c -> c { getPath = path ++ [name] }) $ lift $ linkedMatchNamedCaptureGroup (path ++ [name]) linkedCaptureInvocationSeq
         next
-    pullOutFree :: ReaderStack () -> ReaderStack (LinkedMatch ())
-    pullOutFree x = ReaderT $ \c -> lift (joinFreeT (runReaderT x c))
+    pullOutFree :: ReaderStack () -> ReaderStack (LinkedMatchT (Except String) ())
+    pullOutFree x = ReaderT $ \c -> return (runReaderT x c)
+
 
 
 linkFuncInvocation :: FuncInvocation -> ReaderStack ()
@@ -64,18 +100,63 @@ linkFuncInvocation func = case func of
            |> lift
            |> lift
     iterM linkLet letDecl
-  BuiltInFuncInvocation func args -> do
-    linkedArgs <- linkArgs args
-    let concattedLinkedArgs = concatMonad linkedArgs
+  BuiltInFuncInvocation0Arg func -> lift $ linkedMatchBuiltInFunc0Arg func
+  BuiltInFuncInvocation1Arg func arg0 -> do
+    linkedArg0 <- linkArgs arg0
+    let concattedLinkedArg0 = concatMonad linkedArg0
     -- TODO: Potential bug: what if the argument is itself a named capture group?
-    let processedArgs = if isSingleCharLiteralOrBracket concattedLinkedArgs
-                        then concattedLinkedArgs
-                        else linkedMatchUnnamedCaptureGroup concattedLinkedArgs
+    arg0IsSingleCharLiteralOrBracket <- lift $ lift $ isSingleCharLiteralOrBracket concattedLinkedArg0
+    let processedArg0 :: LinkedMatchT (Except String) ()
+        processedArg0 = if arg0IsSingleCharLiteralOrBracket
+                        then concattedLinkedArg0
+                        else linkedMatchUnnamedCaptureGroup concattedLinkedArg0
     case func of
-      AnyOf  -> lift $ linkedMatchBuiltInFunc AnyOf concattedLinkedArgs
-      NoneOf -> lift $ linkedMatchBuiltInFunc NoneOf concattedLinkedArgs
-      Star   -> lift $ linkedMatchBuiltInFunc Star processedArgs
-      Maybe  -> lift $ linkedMatchBuiltInFunc Maybe processedArgs
+      AnyOf  -> lift $ linkedMatchBuiltInFunc1Arg AnyOf concattedLinkedArg0
+      NoneOf -> lift $ linkedMatchBuiltInFunc1Arg NoneOf concattedLinkedArg0
+      Star   -> lift $ linkedMatchBuiltInFunc1Arg Star processedArg0
+      Plus   -> lift $ linkedMatchBuiltInFunc1Arg Star processedArg0
+      Maybe  -> lift $ linkedMatchBuiltInFunc1Arg Maybe processedArg0
+  BuiltInFuncInvocation2Arg func arg0 arg1 -> do
+    linkedArg0 <- linkArg arg0
+    linkedArg1 <- linkArgs arg1
+    let concattedLinkedArg1 = concatMonad linkedArg1
+    -- TODO: Potential bug: what if the argument is itself a named capture group?
+    arg1IsSingleCharLiteralOrBracket <- lift $ lift $ isSingleCharLiteralOrBracket concattedLinkedArg1
+    let processedArg1 :: LinkedMatchT (Except String) ()
+        processedArg1 = if arg1IsSingleCharLiteralOrBracket
+                        then concattedLinkedArg1
+                        else linkedMatchUnnamedCaptureGroup concattedLinkedArg1
+    case func of
+      AtMost -> do
+        arg0IsNumericCharLiteral <- lift $ lift $ isNumericCharLiteral linkedArg0
+        unless arg0IsNumericCharLiteral do
+          lift $ lift $ throwE "atMost requires a numeric literal as its 1st argument!"
+        lift $ linkedMatchBuiltInFunc2Arg AtMost linkedArg0 processedArg1
+      AtLeast -> do
+        arg0IsNumericCharLiteral <- lift $ lift $ isNumericCharLiteral linkedArg0
+        unless arg0IsNumericCharLiteral do
+          lift $ lift $ throwE "atLeast requires a numeric literal as its 1st argument!"
+        lift $ linkedMatchBuiltInFunc2Arg AtLeast linkedArg0 processedArg1
+  BuiltInFuncInvocation3Arg func arg0 arg1 arg2 -> do
+    linkedArg0 <- linkArg arg0
+    linkedArg1 <- linkArg arg1
+    linkedArg2 <- linkArgs arg2
+    let concattedLinkedArg2 = concatMonad linkedArg2
+    -- TODO: Potential bug: what if the argument is itself a named capture group?
+    arg2IsSingleCharLiteralOrBracket <- lift $ lift $ isSingleCharLiteralOrBracket concattedLinkedArg2
+    let processedArg2 :: LinkedMatchT (Except String) ()
+        processedArg2 = if arg2IsSingleCharLiteralOrBracket
+                        then concattedLinkedArg2
+                        else linkedMatchUnnamedCaptureGroup concattedLinkedArg2
+    case func of
+      Between -> do
+        arg0IsNumericCharLiteral <- lift $ lift $ isNumericCharLiteral linkedArg0
+        arg1IsNumericCharLiteral <- lift $ lift $ isNumericCharLiteral linkedArg1
+        unless arg0IsNumericCharLiteral do
+          lift $ lift $ throwE "between requires a numeric literal as its 1st argument!"
+        unless arg1IsNumericCharLiteral do
+          lift $ lift $ throwE "between requires a numeric literal as its 2nd argument!"
+        lift $ linkedMatchBuiltInFunc3Arg Between linkedArg0 linkedArg1 processedArg2
 
 
 linkLet :: LetDefF (ReaderStack ()) -> ReaderStack ()
@@ -91,15 +172,16 @@ linkLet = \case
     lift $ linkedMatchNamedCaptureGroup nestedPath linkedLetSeq
     next
   where
-    pullOutFree :: ReaderStack () -> ReaderStack (LinkedMatch ())
-    pullOutFree x = ReaderT $ \c -> lift (joinFreeT (runReaderT x c))
+    pullOutFree :: ReaderStack () -> ReaderStack (LinkedMatchT (Except String) ())
+    -- pullOutFree x = ReaderT $ \c -> lift (joinFreeT (runReaderT x c))
+    pullOutFree x = ReaderT $ \c -> return $ runReaderT x c
 
 
-linkArgs :: [FuncArg] -> ReaderStack [LinkedMatch ()]
+linkArgs :: [FuncArg] -> ReaderStack [LinkedMatchT (Except String) ()]
 linkArgs = mapM linkArg
+
+linkArg :: FuncArg -> ReaderStack (LinkedMatchT (Except String) ())
+linkArg (ArgLiteral string)  = return $ linkedMatchLiteral string
+linkArg (InvocationArg func) = pullOutFree $ linkFuncInvocation func
   where
-    linkArg :: FuncArg -> ReaderStack (LinkedMatch ())
-    linkArg (ArgLiteral string)  = return $ linkedMatchLiteral string
-    linkArg (InvocationArg func) = pullOutFree $ linkFuncInvocation func
-    pullOutFree :: (Monad m, Traversable f) => ReaderT Config (FreeT f m) a -> ReaderT Config (FreeT f m) (Free f a)
-    pullOutFree x = ReaderT $ \c -> lift (joinFreeT (runReaderT x c))
+    pullOutFree x = ReaderT $ \c -> return $ runReaderT x c

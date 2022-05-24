@@ -18,15 +18,20 @@ import           ProgramAst
 import           ReadProgramAst
 import           Utils
 
+import Data.Functor.Identity
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.Free
+import Data.Functor ((<&>))
+
+
 linkAndEscape :: SedFlavor -> ProgramAst -> String
-linkAndEscape sedFlavor state =
-  let linkedMatch = linkAstMatch state
-  in case linkedMatch of
-    Left err -> "Error: " ++ err
-    Right linkedMatch -> escapeLinkedMatch sedFlavor (optimizeLinkedMatch Set.empty linkedMatch)
+linkAndEscape sedFlavor state = linkAstMatch state 
+                                <&> optimizeLinkedMatch Set.empty 
+                                <&> escapeLinkedMatch sedFlavor 
+                                |> either ("Error: " ++) runIdentity
 
 linkAstMatch :: ProgramAst -> Either String (LinkedMatch ())
-linkAstMatch programAst = runFreeTExceptT $ linkMatch (letDecls programAst) (matchDef programAst)
+linkAstMatch programAst = linkMatch0 (letDecls programAst) (matchDef programAst)
 
 
 repErrorOrSuccess :: Show a => Either a String -> String
@@ -41,7 +46,7 @@ escapeProgramMatch :: SedFlavor -> Program () -> String
 escapeProgramMatch sedFlavor program = repErrorOrSuccess $ do
   ast <- readProgramAst program
   linkedMatch <- linkAstMatch ast
-  return $ escapeLinkedMatch sedFlavor linkedMatch
+  return $ runIdentity $ escapeLinkedMatch sedFlavor linkedMatch
 
 
 escapeOptimizedProgramMatch :: SedFlavor -> Program () -> String
@@ -49,7 +54,7 @@ escapeOptimizedProgramMatch sedFlavor program = repErrorOrSuccess $ do
   ast <- readProgramAst program
   linkedMatch <- linkAstMatch ast
   let optimizedLinkedMatch = optimizeLinkedMatch Set.empty linkedMatch
-  return $ escapeLinkedMatch sedFlavor optimizedLinkedMatch
+  return $ runIdentity $ escapeLinkedMatch sedFlavor optimizedLinkedMatch
 
 
 -- slightly wrong. Capture groups will get screwed up because we decide whether
@@ -60,7 +65,6 @@ printMatchAndSub sedFlavor program = repStrErrorOrSuccess $ do
   unoptimizedLinkedMatch <- linkAstMatch ast
   let optimizedLinkedMatch = optimizeLinkedMatch (listRefsInSub $ subDef ast) unoptimizedLinkedMatch
   linkedSub <- runFreeTExceptT $ linkSub ast optimizedLinkedMatch
-  let escapedMatch = escapeLinkedMatch sedFlavor optimizedLinkedMatch
+  let escapedMatch = runIdentity $ escapeLinkedMatch sedFlavor optimizedLinkedMatch
   let escapedSub = escapeLinkedSub linkedSub
   return $ "s/" ++ escapedMatch ++ "/" ++ escapedSub ++ "/g"
-

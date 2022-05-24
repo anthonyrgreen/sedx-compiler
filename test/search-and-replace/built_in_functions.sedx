@@ -1,4 +1,4 @@
 match
-${capture(maybe('goodbye')) as maybe_goodbye} ${capture(star('hello')) as many_hello} ${maybe('non-existent ')}${capture(noneof('a-z')) as noneof_a_z} ${capture(anyof('a-z')) as anyof_a_z}
+${capture(maybe('goodbye')) as maybe_goodbye} ${capture(any()) as one_char} ${capture(star('hello')) as many_hello} ${maybe('non-existent ')}${capture(noneOf('a-z')) as noneof_a_z} ${capture(anyOf('a-z')) as anyof_a_z} ${capture(star(any())) as many_chars}
 substitute
-${many_hello} ${maybe_goodbye} ${anyof_a_z} ${noneof_a_z}
+${many_chars} ${one_char} ${many_hello} ${maybe_goodbye} ${anyof_a_z} ${noneof_a_z}

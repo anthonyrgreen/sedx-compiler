@@ -19,7 +19,7 @@ import           Data.Set                   as Set
 import           ProgramAst
 import           ReadProgramAst
 import           Utils
-
+import Data.Functor.Identity
 
 linkSub :: ProgramAst -> LinkedMatch () -> LinkedSubT (Except String) ()
 linkSub programAst linkedMatch = iterM processLine (subDef programAst)
@@ -44,7 +44,7 @@ getCaptureGroupNumsByPath linkedMatch =
     |> execWriter
     |> Map.fromList
     where
-      processLine :: Bool -> LinkedMatchF (StateT Int (Writer [([String], Int)]) a) -> StateT Int (Writer [([String], Int)]) a
+      processLine :: Bool -> LinkedMatchF Identity (StateT Int (Writer [([String], Int)]) a) -> StateT Int (Writer [([String], Int)]) a
       processLine recordCaptureGroups = \case
         LinkedMatchLiteral literal next -> next
         LinkedMatchUnnamedCaptureGroup nestedDef next -> do
@@ -57,8 +57,21 @@ getCaptureGroupNumsByPath linkedMatch =
           modify (+1)
           iterM (processLine recordCaptureGroups) nestedDef
           next
-        LinkedMatchBuiltInFunc func funcArgs next -> do
-          iterM (processLine recordCaptureGroups) funcArgs
+        LinkedMatchBuiltInFunc0Arg func next -> next
+        LinkedMatchBuiltInFunc1Arg func arg0 next -> do
+          iterM (processLine recordCaptureGroups) arg0
+          next
+        -- I think that, for alternatives, this should be different, because they can actually be inside
+        -- capture groups
+        LinkedMatchBuiltInFunc2Arg func arg0 arg1 next -> do
+          iterM (processLine recordCaptureGroups) arg0
+          iterM (processLine recordCaptureGroups) arg1
+          next
+        LinkedMatchBuiltInFunc3Arg func arg0 arg1 arg2 next -> do
+          iterM (processLine recordCaptureGroups) arg0
+          iterM (processLine recordCaptureGroups) arg1
+          iterM (processLine recordCaptureGroups) arg2
+          next
           next
 
 

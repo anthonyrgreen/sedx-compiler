@@ -1,0 +1,6 @@
+let
+  myStartLine := '${startLine(), capture(anyOf('0-9')) as firstNum}'
+match
+${capture(myStartLine()) as myStartLine}
+substitute
+INSERT! ${myStartLine.firstNum}

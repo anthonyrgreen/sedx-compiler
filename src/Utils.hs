@@ -6,6 +6,7 @@ module Utils
     , applyExcept
     , runFreeTExceptT
     , isSingleCharLiteralOrBracket
+    , isNumericCharLiteral
     ) where
 
 
@@ -15,6 +16,10 @@ import           Control.Monad.Trans.Free
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Writer.Lazy
 import           ProgramAst
+import Data.Functor.Identity
+import Data.Maybe
+import Data.Function
+import Text.Read
 
 -- Reverse function application
 infixl 1  |>
@@ -22,8 +27,8 @@ infixl 1  |>
 (|>) x f = f x
 
 
-fromEither :: (e -> a) -> Either e a -> a
-fromEither f = either f id
+-- fromEither :: (e -> a) -> Either e a -> a
+-- fromEither f = either f id
 
 -- Available in transformers-0.6.0.0 but we're currently at 0.5.6.2
 -- | Convert a 'Maybe' computation to 'MaybeT'.
@@ -40,7 +45,7 @@ concatMonad = Prelude.foldl (>>) (return ())
 
 applyExcept :: Traversable f => FreeT f (Except e) a -> (Free f a -> Free f a) -> FreeT f (Except e) a
 applyExcept arg func = case runExcept (joinFreeT arg) of
-  Left err      -> arg
+  Left _        -> arg
   Right success -> hoistFreeT generalize $ func success
 
 
@@ -49,23 +54,31 @@ runFreeTExceptT = runExcept . joinFreeT
 
 
 -- TODO: fix a potential bug where there are two literals next to each other and one of them is empty
-isSingleCharLiteralOrBracket :: LinkedMatch () -> Bool
-isSingleCharLiteralOrBracket args = go (getCommands args)
+isSingleCharLiteralOrBracket :: Monad m => LinkedMatchT m () -> m Bool
+isSingleCharLiteralOrBracket args = go <$> getCommands args
   where
     go commands = case commands of
-      [LinkedMatchLiteral str _]          -> length str == 1
-      [LinkedMatchBuiltInFunc AnyOf _ _]  -> True
-      [LinkedMatchBuiltInFunc NoneOf _ _] -> True
-      _                                   -> False
+      [LinkedMatchLiteral str _]              -> length str == 1
+      [LinkedMatchBuiltInFunc1Arg AnyOf _ _]  -> True
+      [LinkedMatchBuiltInFunc1Arg NoneOf _ _] -> True
+      _                                       -> False
 
-
-getCommands :: LinkedMatch () -> [LinkedMatchF ()]
-getCommands linkedMatch = execWriter $ iterM processLine linkedMatch
+isNumericCharLiteral :: Monad m => LinkedMatchT m () -> m Bool
+isNumericCharLiteral args = go <$> getCommands args
   where
-    processLine :: LinkedMatchF (Writer [LinkedMatchF ()] ()) -> Writer [LinkedMatchF ()] ()
-    -- processLine val = tell [val]
-    processLine (LinkedMatchLiteral str next) = tell [LinkedMatchLiteral str ()] >> next
-    processLine (LinkedMatchUnnamedCaptureGroup linkedMatch next) = tell [LinkedMatchUnnamedCaptureGroup linkedMatch ()] >> next
-    processLine (LinkedMatchNamedCaptureGroup name linkedMatch next) = tell [LinkedMatchNamedCaptureGroup name linkedMatch ()] >> next
-    processLine (LinkedMatchBuiltInFunc func args next) = tell [LinkedMatchBuiltInFunc func args ()] >> next
+    go commands = case commands of
+      [LinkedMatchLiteral str _] -> ((readMaybe str) :: Maybe Int) & isJust
+      _ -> False
+
+getCommands :: Monad m => LinkedMatchT m () -> m [LinkedMatchF m ()]
+getCommands = execWriterT . iterTM processLine
+  where
+    processLine :: Monad m => LinkedMatchF m (WriterT [LinkedMatchF m ()] m  ()) -> WriterT [LinkedMatchF m ()] m ()
+    processLine (LinkedMatchLiteral str next)                          = tell [LinkedMatchLiteral str ()]                         >> next
+    processLine (LinkedMatchUnnamedCaptureGroup linkedMatch next)      = tell [LinkedMatchUnnamedCaptureGroup linkedMatch ()]     >> next
+    processLine (LinkedMatchNamedCaptureGroup name linkedMatch next)   = tell [LinkedMatchNamedCaptureGroup name linkedMatch ()]  >> next
+    processLine (LinkedMatchBuiltInFunc0Arg func next)                 = tell [LinkedMatchBuiltInFunc0Arg func ()]                >> next
+    processLine (LinkedMatchBuiltInFunc1Arg func arg0 next)            = tell [LinkedMatchBuiltInFunc1Arg func arg0 ()]           >> next
+    processLine (LinkedMatchBuiltInFunc2Arg func arg0 arg1 next)       = tell [LinkedMatchBuiltInFunc2Arg func arg0 arg1 ()]      >> next
+    processLine (LinkedMatchBuiltInFunc3Arg func arg0 arg1 arg2 next)  = tell [LinkedMatchBuiltInFunc3Arg func arg0 arg1 arg2 ()] >> next
 

@@ -90,12 +90,15 @@ getLetDirectDependencies letDef = iterM writeLet letDef |> execWriter |> List.nu
 
 
 getFuncInvocationDependencies :: FuncInvocation -> [String]
-getFuncInvocationDependencies (BuiltInFuncInvocation _ args) = concatMap getArgDependencies args
-getFuncInvocationDependencies (UserDefinedFuncInvocation func) = [func]
+getFuncInvocationDependencies (BuiltInFuncInvocation0Arg _)                = []
+getFuncInvocationDependencies (BuiltInFuncInvocation1Arg _ arg0)           = concatMap getArgDependencies arg0
+getFuncInvocationDependencies (BuiltInFuncInvocation2Arg _ arg0 arg1)      = getArgDependencies arg0 ++ concatMap getArgDependencies arg1
+getFuncInvocationDependencies (BuiltInFuncInvocation3Arg _ arg0 arg1 arg2) = getArgDependencies arg0 ++ getArgDependencies arg1++ concatMap getArgDependencies arg2
+getFuncInvocationDependencies (UserDefinedFuncInvocation func)             = [func]
 
 
 getArgDependencies :: FuncArg -> [String]
-getArgDependencies (ArgLiteral _) = []
+getArgDependencies (ArgLiteral _)                 = []
 getArgDependencies (InvocationArg funcInvocation) = getFuncInvocationDependencies funcInvocation
 
 

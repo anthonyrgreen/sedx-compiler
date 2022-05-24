@@ -1,0 +1,6 @@
+let
+  myPlus := plus('word', anyOf('0-9'))
+match
+${capture(myPlus()) as words0} ${capture(myPlus()) as words1} ${capture(myPlus()) as words2}
+substitute
+${words2} ${words1} ${words0}

@@ -1,5 +1,5 @@
 let
-  match_special_chars := '${anyof('.[\()*+?{|$^]')}'
+  match_special_chars := '${anyOf('.[\()*+?{|$^]')}'
 match
 ${capture('first') as first}${star(match_special_chars())}${capture('second') as second}
 substitute

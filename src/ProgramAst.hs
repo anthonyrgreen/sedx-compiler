@@ -1,12 +1,15 @@
-{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DeriveTraversable, LambdaCase #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RankNTypes        #-}
-
+{-# LANGUAGE GADTs #-}
 
 module ProgramAst
     ( FuncInvocation(..)
     , FuncArg(..)
-    , BuiltInFunc(..)
+    , BuiltInFunc0Arg(..)
+    , BuiltInFunc1Arg(..)
+    , BuiltInFunc2Arg(..)
+    , BuiltInFunc3Arg(..)
     , LetDefF(..)
     , MatchDefF(..)
     , LinkedMatchF(..)
@@ -38,7 +41,10 @@ module ProgramAst
     , linkedMatchLiteral
     , linkedMatchUnnamedCaptureGroup
     , linkedMatchNamedCaptureGroup
-    , linkedMatchBuiltInFunc
+    , linkedMatchBuiltInFunc0Arg
+    , linkedMatchBuiltInFunc1Arg
+    , linkedMatchBuiltInFunc2Arg
+    , linkedMatchBuiltInFunc3Arg
     , linkedSubLiteral
     , linkedSubBackReference
     ) where
@@ -46,7 +52,8 @@ module ProgramAst
 import           Control.Monad.Morph
 import           Control.Monad.Trans.Free
 import           Data.Functor.Classes
-import           Text.Show.Deriving
+import           Data.Functor ((<&>))
+import Data.Functor.Identity
 
 {- Program commands -}
 
@@ -100,16 +107,28 @@ linkedMatchLiteral :: Monad m => String -> LinkedMatchT m ()
 linkedMatchLiteral literal = liftToFreeTStack $ LinkedMatchLiteral literal
 
 
-linkedMatchUnnamedCaptureGroup :: Monad m => LinkedMatch () -> LinkedMatchT m ()
-linkedMatchUnnamedCaptureGroup match = liftToFreeTStack $ LinkedMatchUnnamedCaptureGroup match
+linkedMatchUnnamedCaptureGroup :: Monad m => LinkedMatchT m () -> LinkedMatchT m ()
+linkedMatchUnnamedCaptureGroup match = liftToFreeTStack1 $ LinkedMatchUnnamedCaptureGroup match
 
 
-linkedMatchNamedCaptureGroup :: Monad m => [String] -> LinkedMatch () -> LinkedMatchT m ()
-linkedMatchNamedCaptureGroup path match = liftToFreeTStack $ LinkedMatchNamedCaptureGroup path match
+linkedMatchNamedCaptureGroup :: Monad m => [String] -> LinkedMatchT m () -> LinkedMatchT m ()
+linkedMatchNamedCaptureGroup path match = liftToFreeTStack1 $ LinkedMatchNamedCaptureGroup path match
 
 
-linkedMatchBuiltInFunc :: Monad m => BuiltInFunc -> LinkedMatch () -> LinkedMatchT m ()
-linkedMatchBuiltInFunc builtInFunc args = liftToFreeTStack $ LinkedMatchBuiltInFunc builtInFunc args
+linkedMatchBuiltInFunc0Arg :: Monad m => BuiltInFunc0Arg -> LinkedMatchT m ()
+linkedMatchBuiltInFunc0Arg func = liftToFreeTStack1 $ LinkedMatchBuiltInFunc0Arg func
+
+
+linkedMatchBuiltInFunc1Arg :: Monad m => BuiltInFunc1Arg -> LinkedMatchT m () -> LinkedMatchT m ()
+linkedMatchBuiltInFunc1Arg func arg0 = liftToFreeTStack1 $ LinkedMatchBuiltInFunc1Arg func arg0
+
+
+linkedMatchBuiltInFunc2Arg :: Monad m => BuiltInFunc2Arg -> LinkedMatchT m () -> LinkedMatchT m () -> LinkedMatchT m ()
+linkedMatchBuiltInFunc2Arg func arg0 arg1 = liftToFreeTStack1 $ LinkedMatchBuiltInFunc2Arg func arg0 arg1
+
+
+linkedMatchBuiltInFunc3Arg :: Monad m => BuiltInFunc3Arg -> LinkedMatchT m () -> LinkedMatchT m () -> LinkedMatchT m () -> LinkedMatchT m ()
+linkedMatchBuiltInFunc3Arg func arg0 arg1 arg2 = liftToFreeTStack1 $ LinkedMatchBuiltInFunc3Arg func arg0 arg1 arg2
 
 
 linkedSubLiteral :: Monad m => String -> LinkedSubT m ()
@@ -142,21 +161,36 @@ liftToFreeTStack :: (Monad m, Functor f) => (forall a. a -> f a) -> FreeT f m ()
 liftToFreeTStack constructorFunc = hoistFreeT generalize $ liftF $ constructorFunc ()
 
 
+liftToFreeTStack1 x = FreeT . return . Free $ x (pure ())
+
 
 -- TODO: Should user-defined functions accept inputs?
 data FuncInvocation = UserDefinedFuncInvocation { funcName :: String }
-                    | BuiltInFuncInvocation { func :: BuiltInFunc, args :: [FuncArg] }
+                    | BuiltInFuncInvocation0Arg BuiltInFunc0Arg
+                    | BuiltInFuncInvocation1Arg BuiltInFunc1Arg [FuncArg]
+                    | BuiltInFuncInvocation2Arg BuiltInFunc2Arg FuncArg [FuncArg]
+                    | BuiltInFuncInvocation3Arg BuiltInFunc3Arg FuncArg FuncArg [FuncArg]
                     deriving (Eq)
 
 
 data FuncArg = ArgLiteral String | InvocationArg FuncInvocation deriving (Eq)
 
 
-data BuiltInFunc = Star
-                 | NoneOf
-                 | AnyOf
-                 | Maybe
-                 deriving (Show, Eq)
+data BuiltInFunc0Arg = Any
+                     | StartLine
+                     | EndLine
+                     deriving (Show, Eq)
+data BuiltInFunc1Arg = Star
+                     | Plus
+                     | NoneOf
+                     | AnyOf
+                     | Maybe
+                     deriving (Show, Eq)
+data BuiltInFunc2Arg = AtMost
+                     | AtLeast
+                     deriving (Show, Eq)
+data BuiltInFunc3Arg = Between 
+                     deriving (Show, Eq)
 
 
 data ProgramF next = LetDecl { letName :: String,  letDef :: LetDef (), next :: next }
@@ -192,13 +226,55 @@ instance Eq1 MatchDefF where
   liftEq _ _ _ = False
 
 
-data LinkedMatchF next = LinkedMatchLiteral String next
-                       | LinkedMatchUnnamedCaptureGroup (LinkedMatch ()) next
-                       | LinkedMatchNamedCaptureGroup [String] (LinkedMatch ()) next
-                       | LinkedMatchBuiltInFunc BuiltInFunc (LinkedMatch ()) next
-                       deriving (Functor, Foldable, Traversable)
-type LinkedMatch a = Free LinkedMatchF a
-type LinkedMatchT m = FreeT LinkedMatchF m
+data LinkedMatchF m next = LinkedMatchLiteral String next
+                         | LinkedMatchUnnamedCaptureGroup (LinkedMatchT m ()) next
+                         | LinkedMatchNamedCaptureGroup [String] (LinkedMatchT m ()) next
+                         | LinkedMatchBuiltInFunc0Arg BuiltInFunc0Arg next
+                         | LinkedMatchBuiltInFunc1Arg BuiltInFunc1Arg (LinkedMatchT m ()) next
+                         | LinkedMatchBuiltInFunc2Arg BuiltInFunc2Arg (LinkedMatchT m ()) (LinkedMatchT m ()) next
+                         | LinkedMatchBuiltInFunc3Arg BuiltInFunc3Arg (LinkedMatchT m ()) (LinkedMatchT m ()) (LinkedMatchT m ()) next
+
+
+instance Monad m => Functor (LinkedMatchF m) where
+  fmap f = \case
+    LinkedMatchLiteral x next                     -> LinkedMatchLiteral x (f next)
+    LinkedMatchUnnamedCaptureGroup x next         -> LinkedMatchUnnamedCaptureGroup x (f next)
+    LinkedMatchNamedCaptureGroup x y next         -> LinkedMatchNamedCaptureGroup x y (f next)
+    LinkedMatchBuiltInFunc0Arg func next          -> LinkedMatchBuiltInFunc0Arg func (f next)
+    LinkedMatchBuiltInFunc1Arg func a1 next       -> LinkedMatchBuiltInFunc1Arg func a1 (f next)
+    LinkedMatchBuiltInFunc2Arg func a1 a2 next    -> LinkedMatchBuiltInFunc2Arg func a1 a2 (f next)
+    LinkedMatchBuiltInFunc3Arg func a1 a2 a3 next -> LinkedMatchBuiltInFunc3Arg func a1 a2 a3  (f next)
+instance Monad m => Foldable (LinkedMatchF m) where
+  foldMap f = \case
+    LinkedMatchLiteral x next                     -> f next
+    LinkedMatchUnnamedCaptureGroup x next         -> f next
+    LinkedMatchNamedCaptureGroup x y next         -> f next
+    LinkedMatchBuiltInFunc0Arg func next          -> f next
+    LinkedMatchBuiltInFunc1Arg func a1 next       -> f next
+    LinkedMatchBuiltInFunc2Arg func a1 a2 next    -> f next
+    LinkedMatchBuiltInFunc3Arg func a1 a2 a3 next -> f next
+  foldr f acc = \case
+    LinkedMatchLiteral x next -> f next acc
+    LinkedMatchUnnamedCaptureGroup x next -> f next acc
+    LinkedMatchNamedCaptureGroup x y next -> f next acc
+    LinkedMatchBuiltInFunc0Arg func next          -> f next acc
+    LinkedMatchBuiltInFunc1Arg func a1 next       -> f next acc
+    LinkedMatchBuiltInFunc2Arg func a1 a2 next    -> f next acc
+    LinkedMatchBuiltInFunc3Arg func a1 a2 a3 next -> f next acc
+instance Monad m => Traversable (LinkedMatchF m) where
+  sequenceA = \case
+    LinkedMatchLiteral x next                     -> next <&> LinkedMatchLiteral x
+    LinkedMatchUnnamedCaptureGroup x next         -> next <&> LinkedMatchUnnamedCaptureGroup x
+    LinkedMatchNamedCaptureGroup x y next         -> next <&> LinkedMatchNamedCaptureGroup x y
+    LinkedMatchBuiltInFunc0Arg func next          -> next <&> LinkedMatchBuiltInFunc0Arg func
+    LinkedMatchBuiltInFunc1Arg func a1 next       -> next <&> LinkedMatchBuiltInFunc1Arg func a1
+    LinkedMatchBuiltInFunc2Arg func a1 a2 next    -> next <&> LinkedMatchBuiltInFunc2Arg func a1 a2
+    LinkedMatchBuiltInFunc3Arg func a1 a2 a3 next -> next <&> LinkedMatchBuiltInFunc3Arg func a1 a2 a3
+  traverse f x = sequenceA (f <$> x)
+
+
+type LinkedMatch a = Free (LinkedMatchF Identity) a
+type LinkedMatchT m = FreeT (LinkedMatchF m) m
 
 
 data SubDefF next = SubLiteral String next
@@ -225,5 +301,13 @@ data LinkedSubF next = LinkedSubLiteral String next
 type LinkedSub a = Free LinkedSubF a
 type LinkedSubT m a = FreeT LinkedSubF m a
 
+data AttemptF next = AttemptConstructor String next next deriving (Functor, Foldable, Traversable)
+type Attempt a = Free AttemptF a
+type AttemptT m a = FreeT AttemptF m a
 
 
+attempt :: String -> Attempt () -> Attempt ()
+attempt str nested1 = free $ Free $ AttemptConstructor str nested1 (pure ())
+
+attempt1 :: Monad m => String -> AttemptT m () -> AttemptT m ()
+attempt1 str nested1 = FreeT . return . Free $ AttemptConstructor str nested1 (pure ())

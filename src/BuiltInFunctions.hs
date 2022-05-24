@@ -9,10 +9,10 @@ module BuiltInFunctions
 import           ProgramAst
 
 anyOfLiteral :: String -> FuncInvocation
-anyOfLiteral string = BuiltInFuncInvocation AnyOf [ArgLiteral string]
+anyOfLiteral string = BuiltInFuncInvocation1Arg AnyOf [ArgLiteral string]
 
 noneOfLiteral :: String -> FuncInvocation
-noneOfLiteral string = BuiltInFuncInvocation NoneOf [ArgLiteral string]
+noneOfLiteral string = BuiltInFuncInvocation1Arg NoneOf [ArgLiteral string]
 
 maybeLiteral :: String -> FuncInvocation
-maybeLiteral char = BuiltInFuncInvocation Maybe [ArgLiteral char]
+maybeLiteral char = BuiltInFuncInvocation1Arg Maybe [ArgLiteral char]

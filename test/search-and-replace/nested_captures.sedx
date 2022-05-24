@@ -1,5 +1,5 @@
 let
-  digit := '${anyof('0-9')}'
+  digit := '${anyOf('0-9')}'
   inner := '${capture(digit()) as first, ' ', capture(digit()) as second}'
   outer := '${capture(inner()) as first, ' ', capture(inner()) as second}'
 match

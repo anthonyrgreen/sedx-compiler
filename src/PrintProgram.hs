@@ -15,9 +15,13 @@ import           ProgramAst
 import           Text.Show.Deriving
 import           Utils
 
+
 instance Show FuncInvocation where
-  show (UserDefinedFuncInvocation name) = "UserFuncInvoc: name = " ++ name
-  show (BuiltInFuncInvocation func args) = "BuiltinFuncInvoc: name = " ++ show func ++ ", args = " ++ show args
+  show (UserDefinedFuncInvocation name)                = "UserFuncInvoc: name = " ++ name
+  show (BuiltInFuncInvocation0Arg func)                = "BuiltinFuncInvoc0Arg: name = " ++ show func
+  show (BuiltInFuncInvocation1Arg func arg0)           = "BuiltinFuncInvoc1Arg: name = " ++ show func ++ ", arg0 = " ++ show arg0
+  show (BuiltInFuncInvocation2Arg func arg0 arg1)      = "BuiltinFuncInvoc2Arg: name = " ++ show func ++ ", arg0 = " ++ show arg0 ++ ", arg1 = " ++ show arg1
+  show (BuiltInFuncInvocation3Arg func arg0 arg1 arg2) = "BuiltinFuncInvoc3Arg: name = " ++ show func ++ ", arg0 = " ++ show arg0 ++ ", arg1 = " ++ show arg1 ++ ", arg2 = " ++ show arg2
 
 
 instance Show FuncArg where
@@ -109,11 +113,38 @@ showLinkedMatchDef linkedMatchDef = "LinkedMatch\n" ++ go 1 linkedMatchDef
         ++ go (tabs + 1) nestedDef
         ++ indent tabs "}\n"
         ++ go tabs next
-      Free (LinkedMatchBuiltInFunc builtInFunc nestedDefs next) ->
-        indent tabs "Built-in func:\n"
+      Free (LinkedMatchBuiltInFunc0Arg builtInFunc next) ->
+        indent tabs "Built-in func, 0 arg:\n"
         ++ indent tabs "name: <" ++ show builtInFunc ++ ">\n"
-        ++ indent tabs "{\n"
-        ++ go (tabs + 1) nestedDefs
+        ++ go tabs next
+      Free (LinkedMatchBuiltInFunc1Arg builtInFunc arg0 next) ->
+        indent tabs "Built-in func, 1 arg:\n"
+        ++ indent tabs "name: <" ++ show builtInFunc ++ ">\n"
+        ++ indent tabs "arg0: {\n"
+        ++ go (tabs + 1) arg0
+        ++ indent tabs "}\n"
+        ++ go tabs next
+      Free (LinkedMatchBuiltInFunc2Arg builtInFunc arg0 arg1 next) ->
+        indent tabs "Built-in func, 2 arg:\n"
+        ++ indent tabs "name: <" ++ show builtInFunc ++ ">\n"
+        ++ indent tabs "arg0: {\n"
+        ++ go (tabs + 1) arg0
+        ++ indent tabs "}\n"
+        ++ indent tabs "arg1: {\n"
+        ++ go (tabs + 1) arg1
+        ++ indent tabs "}\n"
+        ++ go tabs next
+      Free (LinkedMatchBuiltInFunc3Arg builtInFunc arg0 arg1 arg2 next) ->
+        indent tabs "Built-in func, 3 arg:\n"
+        ++ indent tabs "name: <" ++ show builtInFunc ++ ">\n"
+        ++ indent tabs "arg0: {\n"
+        ++ go (tabs + 1) arg0
+        ++ indent tabs "}\n"
+        ++ indent tabs "arg1: {\n"
+        ++ go (tabs + 1) arg1
+        ++ indent tabs "}\n"
+        ++ indent tabs "arg2: {\n"
+        ++ go (tabs + 1) arg2
         ++ indent tabs "}\n"
         ++ go tabs next
 
