@@ -46,6 +46,7 @@ Some other expressions you will be able to use (soon!)
 - [x] We should add the option to remove unused capture groups.
 - [ ] Functions, like capture groups, should accept multiple sub-expressions as arguments
 - [ ] Compile-time checking of regex validity
-- [ ] Moves [ to the front of a character class when it is not a part of a collating symbol
+- [x] Moves [ to the front of a character class when it is not a part of a collating symbol
 - [ ] User-defined functions can accept arguments?
-- [ ] Add `plus()`, `any()`, `start()`, `count()`, and `end()`
+- [x] Add `plus()`, `any()`, `start()`, `atLeast()`, `atMost()`, and `end()`
+- [ ] Add `exactly()`
